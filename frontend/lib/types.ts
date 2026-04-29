@@ -2,6 +2,14 @@
 
 export type Role = "user" | "assistant" | "tool" | "system";
 export type RouteName = "dag" | "react";
+export type IdentityRole = "employee" | "executive" | "admin";
+
+export interface Identity {
+  tenant_id: string;
+  user_id: string;
+  session_id: string;
+  role: IdentityRole;
+}
 export type EventType =
   | "route"
   | "policy"

@@ -5,6 +5,7 @@ from app.api.identity import resolve_identity
 from app.memory import service as memory
 from app.models import Identity
 from app.seed.bob_seed import seed_bob
+from app.seed.demo_accounts import seed_demo_accounts
 from app.seed.tenant_isolation_seed import seed_tenant_isolation
 
 router = APIRouter()
@@ -14,7 +15,8 @@ router = APIRouter()
 async def seed_endpoint():
     await seed_bob()
     await seed_tenant_isolation()
-    return {"status": "seeded"}
+    accounts_result = await seed_demo_accounts()
+    return {"status": "seeded", "demo_accounts": accounts_result}
 
 
 @router.post("/api/reset")

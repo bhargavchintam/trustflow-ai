@@ -19,6 +19,11 @@ class Settings(BaseSettings):
 
     database_url: str = Field(..., alias="DATABASE_URL")
 
+    supabase_url: str | None = Field(None, alias="SUPABASE_URL")
+    supabase_anon_key: str | None = Field(None, alias="SUPABASE_ANON_KEY")
+    supabase_service_role_key: str | None = Field(None, alias="SUPABASE_SERVICE_ROLE_KEY")
+    supabase_jwt_secret: str | None = Field(None, alias="SUPABASE_JWT_SECRET")
+
     default_tenant_id: str = Field("tenant_acme", alias="DEFAULT_TENANT_ID")
     default_user_id: str = Field("alice", alias="DEFAULT_USER_ID")
 

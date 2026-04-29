@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pythonjsonlogger import jsonlogger
 
-from app.api import admin, chat, eval as eval_api, healthz, memory as memory_api, trace
+from app.api import admin, auth, chat, eval as eval_api, healthz, memory as memory_api, trace
 from app.config import get_settings
 from app.db.bootstrap import bootstrap
 from app.db.connection import close_pool
@@ -55,6 +55,7 @@ app.add_middleware(
 )
 
 app.include_router(healthz.router)
+app.include_router(auth.router)
 app.include_router(chat.router)
 app.include_router(memory_api.router)
 app.include_router(trace.router)

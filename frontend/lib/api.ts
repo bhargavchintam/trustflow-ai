@@ -5,20 +5,28 @@ import type {
   RouteDecision,
   TraceEvent,
 } from "./types";
+import { getAccessToken } from "./useAuth";
 
 export const API_BASE =
   typeof window === "undefined"
     ? ""
     : process.env.NEXT_PUBLIC_API_BASE ?? "";
 
-function headers(tenant: string, user: string, sessionId: string): HeadersInit {
-  return {
+async function headers(
+  tenant: string,
+  user: string,
+  sessionId: string,
+): Promise<HeadersInit> {
+  const h: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "text/event-stream",
     "X-Tenant-Id": tenant,
     "X-User-Id": user,
     "X-Session-Id": sessionId,
   };
+  const token = await getAccessToken();
+  if (token) h["Authorization"] = `Bearer ${token}`;
+  return h;
 }
 
 export interface ChatStreamMessage {
@@ -51,7 +59,7 @@ export async function streamChat(opts: {
   const body = JSON.stringify({ input: opts.input, force_route: opts.forceRoute ?? null });
   const r = await fetch(`${API_BASE}/api/chat`, {
     method: "POST",
-    headers: headers(opts.tenant, opts.user, opts.sessionId),
+    headers: await headers(opts.tenant, opts.user, opts.sessionId),
     body,
   });
   if (!r.ok || !r.body) throw new Error(`chat failed: ${r.status}`);
@@ -116,7 +124,7 @@ export async function fetchMemory(
   sessionId: string,
 ): Promise<MemoryAll> {
   const r = await fetch(`${API_BASE}/api/memory?tier=all`, {
-    headers: headers(tenant, user, sessionId),
+    headers: await headers(tenant, user, sessionId),
   });
   if (!r.ok) throw new Error(`memory failed: ${r.status}`);
   return r.json();
@@ -129,7 +137,7 @@ export async function fetchTrace(
   messageId: string,
 ): Promise<TraceEvent[]> {
   const r = await fetch(`${API_BASE}/api/trace?message_id=${messageId}`, {
-    headers: headers(tenant, user, sessionId),
+    headers: await headers(tenant, user, sessionId),
   });
   if (!r.ok) throw new Error(`trace failed: ${r.status}`);
   return (await r.json()).events as TraceEvent[];
@@ -152,7 +160,7 @@ export async function reseedAll(): Promise<void> {
 export async function wipeUser(tenant: string, user: string, sessionId: string): Promise<void> {
   await fetch(`${API_BASE}/api/reset`, {
     method: "POST",
-    headers: headers(tenant, user, sessionId),
+    headers: await headers(tenant, user, sessionId),
   });
 }
 
