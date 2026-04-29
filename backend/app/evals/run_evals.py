@@ -21,7 +21,7 @@ EVAL_PATH = Path(__file__).parent / "synthetic_eval.json"
 async def _run_case(client: httpx.AsyncClient, api_url: str, case: dict, run_id: str) -> dict:
     session_id = f"eval_{run_id}_{case['id']}"
     tenant = case.get("tenant", "tenant_acme")
-    user = case.get("user", "alice")
+    user = case.get("user", "sam")
     headers = {
         "X-Tenant-Id": tenant,
         "X-User-Id": user,
@@ -29,7 +29,9 @@ async def _run_case(client: httpx.AsyncClient, api_url: str, case: dict, run_id:
         "Content-Type": "application/json",
         "Accept": "text/event-stream",
     }
-    if case["category"] == "memory" and user == "alice":
+    # Reset the new-user persona before any memory case so the
+    # "no personal context" check is deterministic (independent of prior cases).
+    if case["category"] == "memory" and user == "sam":
         await client.post(f"{api_url}/api/reset", headers=headers)
     body = {"input": case["input"]}
 

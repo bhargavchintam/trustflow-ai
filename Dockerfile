@@ -4,6 +4,16 @@
 FROM node:20-alpine AS frontend-build
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@9 --activate
+
+# Public env vars are inlined into the JS bundle at build time by Next.js,
+# so they MUST be passed as build args (not runtime env on App Runner).
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_API_BASE
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL \
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY \
+    NEXT_PUBLIC_API_BASE=$NEXT_PUBLIC_API_BASE
+
 COPY frontend/package.json frontend/pnpm-lock.yaml* ./
 RUN pnpm install --frozen-lockfile=false
 COPY frontend/ ./

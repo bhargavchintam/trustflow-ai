@@ -8,6 +8,6 @@ async def check_vpn_status(args: dict[str, Any], identity: Identity) -> dict[str
     return {
         "user": target,
         "client": "GlobalProtect 6.2",
-        "tunnel": "down" if target == "bob" else "up",
+        "tunnel": "down" if target == "maya" else "up",
         "last_handshake": "2026-04-29T12:01:00Z",
     }

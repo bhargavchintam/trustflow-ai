@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     supabase_jwt_secret: str | None = Field(None, alias="SUPABASE_JWT_SECRET")
 
     default_tenant_id: str = Field("tenant_acme", alias="DEFAULT_TENANT_ID")
-    default_user_id: str = Field("alice", alias="DEFAULT_USER_ID")
+    default_user_id: str = Field("sam", alias="DEFAULT_USER_ID")
 
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 

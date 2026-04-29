@@ -5,7 +5,7 @@ from app.models import Identity
 
 async def vpn_diagnostic(args: dict[str, Any], identity: Identity) -> dict[str, Any]:
     target = args.get("target_user", identity.user_id)
-    if target == "bob":
+    if target == "maya":
         return {
             "status": "GlobalProtect 6.2 detected",
             "last_disconnect": "2026-04-15T09:32:00Z",

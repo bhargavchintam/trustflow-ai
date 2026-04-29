@@ -1,4 +1,4 @@
-"""Seed a second tenant (tenant_globex with charlie) so the cross-tenant eval case
+"""Seed a second tenant (tenant_globex with Priya) so the cross-tenant eval case
 has data to be isolated FROM."""
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from app.db.connection import close_pool, connection, init_pool
 from app.memory import service as memory
 
 TENANT = "tenant_globex"
-USER = "charlie"
+USER = "priya"
 
 ROLE = "employee"
 
@@ -41,7 +41,7 @@ async def seed_tenant_isolation() -> None:
     await init_pool()
     await _ensure_role()
     await memory.wipe_user(tenant_id=TENANT, user_id=USER)
-    session_id = "session_charlie_2026_04_20"
+    session_id = "session_globex_employee_2026_04_20"
     for role, content in EPISODIC:
         await memory.write_episodic(
             tenant_id=TENANT, user_id=USER, session_id=session_id, role=role, content=content

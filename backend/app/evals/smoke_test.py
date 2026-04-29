@@ -49,11 +49,11 @@ async def run_smoke(url: str) -> int:
     fails = 0
     async with httpx.AsyncClient(timeout=60.0) as client:
 
-        # Wipe Alice's memory so the "new user has no personal context" check is deterministic.
-        # Bob keeps his pre-seeded memory.
+        # Wipe the new-user (sam) memory so the "no personal context" check is
+        # deterministic. The returning user (maya) keeps her pre-seeded memory.
         await client.post(
             f"{url}/api/reset",
-            headers={"X-Tenant-Id": "tenant_acme", "X-User-Id": "alice", "X-Session-Id": str(uuid4())},
+            headers={"X-Tenant-Id": "tenant_acme", "X-User-Id": "sam", "X-Session-Id": str(uuid4())},
         )
 
         async def s1_health():
@@ -86,16 +86,16 @@ async def run_smoke(url: str) -> int:
             return ok, f"episodic={ep_hits} semantic={sem_hits} expected_personal={expect_personal_memory}"
 
         async def s2_alice():
-            return await _vpn("alice", expect_personal_memory=False)
+            return await _vpn("sam", expect_personal_memory=False)
 
         async def s3_bob():
-            return await _vpn("bob", expect_personal_memory=True)
+            return await _vpn("maya", expect_personal_memory=True)
 
         async def s4_dag():
             sid = str(uuid4())
             headers = {
                 "X-Tenant-Id": "tenant_acme",
-                "X-User-Id": "alice",
+                "X-User-Id": "sam",
                 "X-Session-Id": sid,
                 "Accept": "text/event-stream",
             }
@@ -113,7 +113,7 @@ async def run_smoke(url: str) -> int:
             sid = str(uuid4())
             headers = {
                 "X-Tenant-Id": "tenant_acme",
-                "X-User-Id": "alice",
+                "X-User-Id": "sam",
                 "X-Session-Id": sid,
                 "Accept": "text/event-stream",
             }
@@ -135,8 +135,8 @@ async def run_smoke(url: str) -> int:
 
         scenarios = [
             ("Health", s1_health),
-            ("Alice / VPN", s2_alice),
-            ("Bob / VPN", s3_bob),
+            ("New user / VPN (no prior history)", s2_alice),
+            ("Returning user / VPN (recognises history)", s3_bob),
             ("DAG password_reset", s4_dag),
             ("Prompt-injection block", s5_injection),
         ]

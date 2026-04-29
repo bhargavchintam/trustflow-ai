@@ -1,14 +1,14 @@
-"""Seed the four demo accounts in Supabase Auth + user_roles.
+"""Seed the four sample workspace accounts in Supabase Auth + user_roles.
 
-Idempotent: safe to run repeatedly. If an account already exists, it's left
-alone (we only set the password to the demo default if the user is freshly
-created or password is None).
+Idempotent: safe to run repeatedly. Existing accounts are left alone; legacy
+emails (older naming) are removed so the login UI only ever surfaces the
+current set.
 
-Demo accounts (all use password "DemoPass123!"):
-    alice@acme.demo     -> tenant_acme,    role=employee
-    bob@acme.demo       -> tenant_acme,    role=employee  (pre-seeded memory)
-    charlie@globex.demo -> tenant_globex,  role=employee
-    admin@acme.demo     -> tenant_acme,    role=admin
+Sample accounts (all use password "DemoPass123!"):
+    sam@acme.com       -> tenant_acme,    role=employee  (fresh, no history)
+    maya@acme.com      -> tenant_acme,    role=employee  (pre-seeded history)
+    priya@globex.com   -> tenant_globex,  role=employee  (separate tenant)
+    drew@acme.com      -> tenant_acme,    role=admin     (admin surface)
 
 Run after `app.seed.bob_seed` and `app.seed.tenant_isolation_seed` so memory
 and roles tables already exist with the right rows.
@@ -28,16 +28,25 @@ log = logging.getLogger(__name__)
 DEMO_PASSWORD = "DemoPass123!"
 
 DEMO_ACCOUNTS: list[tuple[str, str]] = [
-    ("alice@acme.demo", "Alice (employee, no prior history — the new-user demo)"),
-    ("bob@acme.demo", "Bob (employee, pre-seeded VPN history — the returning-user demo)"),
-    ("charlie@globex.demo", "Charlie (employee, different tenant — proves tenant isolation)"),
-    ("admin@acme.demo", "Admin (admin role — unlocks Demo Controls + Attack chips + /eval)"),
+    ("sam@acme.com", "Sam (Acme employee, fresh account — no prior history)"),
+    ("maya@acme.com", "Maya (Acme employee, returning user with prior IT history)"),
+    ("priya@globex.com", "Priya (Globex employee, separate tenant)"),
+    ("drew@acme.com", "Drew (Acme administrator, full ops access)"),
 ]
 
+# Old account emails that should be removed if found (renamed during product polish).
+LEGACY_EMAILS_TO_REMOVE = {
+    "alice@acme.demo",
+    "bob@acme.demo",
+    "charlie@globex.demo",
+    "admin@acme.demo",
+}
 
-def _list_existing_emails() -> set[str]:
+
+def _list_existing_users() -> dict[str, str]:
+    """Return {email_lower: user_id} for all users in the project."""
     client = admin_client()
-    emails: set[str] = set()
+    out: dict[str, str] = {}
     page = 1
     while True:
         resp = client.auth.admin.list_users(page=page, per_page=100)
@@ -46,12 +55,17 @@ def _list_existing_emails() -> set[str]:
             break
         for u in users:
             email = getattr(u, "email", None)
-            if email:
-                emails.add(email.lower())
+            uid = getattr(u, "id", None)
+            if email and uid:
+                out[email.lower()] = uid
         if len(users) < 100:
             break
         page += 1
-    return emails
+    return out
+
+
+def _list_existing_emails() -> set[str]:
+    return set(_list_existing_users().keys())
 
 
 def _create_account(email: str, password: str) -> None:
@@ -83,14 +97,31 @@ async def _ensure_role(tenant_id: str, user_id: str, role: str) -> None:
 
 async def seed_demo_accounts(emails: Iterable[tuple[str, str]] | None = None) -> dict:
     accounts = list(emails) if emails is not None else DEMO_ACCOUNTS
-    summary = {"created": [], "existing": [], "errors": []}
+    summary = {"created": [], "existing": [], "removed_legacy": [], "errors": []}
 
     try:
-        existing = _list_existing_emails()
+        existing_users = _list_existing_users()
     except SupabaseNotConfigured as e:
         return {"error": str(e), **summary}
     except Exception as e:
         return {"error": f"list_users failed: {e}", **summary}
+
+    existing = set(existing_users.keys())
+
+    # Remove any legacy demo accounts (renamed during product polish) so the
+    # login page only ever shows the current account list.
+    try:
+        client = admin_client()
+        for legacy_email in LEGACY_EMAILS_TO_REMOVE:
+            uid = existing_users.get(legacy_email)
+            if uid:
+                try:
+                    client.auth.admin.delete_user(uid)
+                    summary["removed_legacy"].append(legacy_email)
+                except Exception as e:
+                    summary["errors"].append({"email": legacy_email, "error": f"delete: {e}"})
+    except Exception as e:
+        summary["errors"].append({"email": "<legacy-cleanup>", "error": str(e)})
 
     for email, _label in accounts:
         email_l = email.lower()

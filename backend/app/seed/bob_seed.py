@@ -1,6 +1,7 @@
-"""Seed Bob's pre-existing memory so the returning-user demo works.
+"""Seed Acme tenant: Maya's pre-existing memory + procedural playbooks.
 
-Idempotent: deletes Bob's existing memory before reseeding.
+Idempotent: deletes Maya's existing memory before reseeding so the
+returning-user behaviour starts from a clean slate every time.
 """
 from __future__ import annotations
 
@@ -10,14 +11,15 @@ from app.db.connection import close_pool, connection, init_pool
 from app.memory import service as memory
 
 TENANT = "tenant_acme"
+RETURNING_USER = "maya"
 DEFAULT_ROLES = {
-    "alice": "employee",
-    "bob": "employee",
-    "charlie": "employee",
+    "sam": "employee",
+    "maya": "employee",
+    "drew": "admin",
     "ceo": "executive",
 }
 
-BOB_EPISODIC = [
+MAYA_EPISODIC = [
     ("user", "VPN keeps disconnecting whenever my Mac wakes from sleep. It's been happening for the last week."),
     ("assistant", "Got it — sounds like a wake-event issue with GlobalProtect. Let me check your client version and recent disconnect events."),
     ("user", "Thanks. It's especially bad when I'm on coffee shop wifi."),
@@ -26,7 +28,7 @@ BOB_EPISODIC = [
     ("assistant", "Glad it's fixed. I've recorded the playbook for next time."),
 ]
 
-BOB_SEMANTIC = [
+MAYA_SEMANTIC = [
     "Uses MacBook Pro M2 (macOS 14.5)",
     "VPN client: Palo Alto GlobalProtect 6.2",
     "Frequently works from coffee shops on public wifi",
@@ -139,10 +141,11 @@ async def _ensure_user_roles() -> None:
 
 
 async def seed_bob() -> None:
+    """Kept named seed_bob for import stability; seeds Maya's history under tenant_acme."""
     await init_pool()
     await _ensure_user_roles()
 
-    await memory.wipe_user(tenant_id=TENANT, user_id="bob")
+    await memory.wipe_user(tenant_id=TENANT, user_id=RETURNING_USER)
 
     async with connection() as conn:
         async with conn.cursor() as cur:
@@ -153,15 +156,15 @@ async def seed_bob() -> None:
                 )
         await conn.commit()
 
-    session_id = "session_bob_2026_04_15"
-    for role, content in BOB_EPISODIC:
+    session_id = "session_acme_returning_user"
+    for role, content in MAYA_EPISODIC:
         await memory.write_episodic(
-            tenant_id=TENANT, user_id="bob", session_id=session_id, role=role, content=content
+            tenant_id=TENANT, user_id=RETURNING_USER, session_id=session_id, role=role, content=content
         )
 
-    for fact in BOB_SEMANTIC:
+    for fact in MAYA_SEMANTIC:
         await memory.write_semantic(
-            tenant_id=TENANT, user_id="bob", fact=fact, confidence=0.9
+            tenant_id=TENANT, user_id=RETURNING_USER, fact=fact, confidence=0.9
         )
 
     for proc in ALL_PROCEDURAL:
@@ -175,7 +178,7 @@ async def seed_bob() -> None:
 async def main() -> None:
     try:
         await seed_bob()
-        print(f"[seed] bob seeded under tenant={TENANT}")
+        print(f"[seed] {RETURNING_USER} seeded under tenant={TENANT}")
     finally:
         await close_pool()
 

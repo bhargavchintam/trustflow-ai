@@ -26,10 +26,20 @@ If anything is missing, stop and tell the user what to set.
 
 ## Steps
 
-1. **Build image** (must be linux/amd64 for App Runner on x86 compute):
+1. **Build image** (must be linux/amd64 for App Runner on x86 compute).
+   `NEXT_PUBLIC_*` env vars MUST be passed as build args because Next.js inlines them
+   into the JS bundle at build time — App Runner runtime env vars don't reach the
+   already-built static bundle.
    ```
-   docker build --platform linux/amd64 -t trustflow-ai:latest .
+   set -a; source .env; source frontend/.env.local; set +a
+   docker build --platform linux/amd64 \
+     --build-arg NEXT_PUBLIC_SUPABASE_URL="$NEXT_PUBLIC_SUPABASE_URL" \
+     --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY="$NEXT_PUBLIC_SUPABASE_ANON_KEY" \
+     --build-arg NEXT_PUBLIC_API_BASE="" \
+     -t trustflow-ai:latest .
    ```
+   `NEXT_PUBLIC_API_BASE=""` is intentional: same-origin in production, the bundle
+   talks to `/api/*` on whatever URL it's served from.
 
 2. **ECR login:**
    ```

@@ -8,26 +8,26 @@ import { SUPABASE_CONFIGURED } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const DEMO_PASSWORD = "DemoPass123!";
-const DEMO_ACCOUNTS = [
+const SAMPLE_WORKSPACES = [
   {
-    email: "alice@acme.demo",
-    label: "Alice",
-    sub: "tenant_acme · employee · no prior history (new-user demo)",
+    email: "sam@acme.com",
+    label: "Sam Patel",
+    sub: "Acme · Engineering",
   },
   {
-    email: "bob@acme.demo",
-    label: "Bob",
-    sub: "tenant_acme · employee · pre-seeded VPN history (returning-user demo)",
+    email: "maya@acme.com",
+    label: "Maya Iyer",
+    sub: "Acme · Engineering",
   },
   {
-    email: "charlie@globex.demo",
-    label: "Charlie",
-    sub: "tenant_globex · employee · open second browser to prove tenant isolation",
+    email: "priya@globex.com",
+    label: "Priya Rao",
+    sub: "Globex · Operations",
   },
   {
-    email: "admin@acme.demo",
-    label: "Admin",
-    sub: "tenant_acme · admin · unlocks demo controls + /eval dashboard",
+    email: "drew@acme.com",
+    label: "Drew Walker",
+    sub: "Acme · IT Administrator",
   },
 ];
 
@@ -96,9 +96,11 @@ export default function LoginPage() {
             </span>
           </div>
           <div>
-            <h1 className="text-3xl font-semibold tracking-tight">Sign in</h1>
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Welcome back
+            </h1>
             <p className="text-muted text-sm mt-1">
-              Hybrid DAG + ReAct IT support · 3-tier memory · policy-gated tools.
+              Sign in to continue, or create an account with your work email.
             </p>
           </div>
 
@@ -161,9 +163,7 @@ export default function LoginPage() {
           </form>
 
           <p className="text-xs text-subtle">
-            {mode === "sign-in"
-              ? "New here? Use the Sign up tab — sign-up is open for any email domain."
-              : "After signing up you'll land in your own tenant (derived from your email domain)."}
+            We sign in with email — your work email becomes your workspace.
           </p>
         </section>
 
@@ -171,16 +171,15 @@ export default function LoginPage() {
           <div className="flex items-center gap-2 text-accent">
             <Sparkles className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wider font-semibold">
-              Demo accounts
+              Sample workspaces
             </span>
           </div>
           <p className="text-muted text-xs leading-relaxed">
-            Pre-seeded for the demo so you can start exploring in one click. Open the
-            same URL in a second browser/incognito window and sign in as a different
-            account to see tenant isolation in action.
+            Continue as one of the sample teammates below. Each workspace is fully
+            isolated — open another browser to compare side by side.
           </p>
           <ul className="space-y-2">
-            {DEMO_ACCOUNTS.map((a) => (
+            {SAMPLE_WORKSPACES.map((a) => (
               <li key={a.email}>
                 <button
                   onClick={() => quickSignIn(a.email)}
@@ -190,15 +189,15 @@ export default function LoginPage() {
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-medium text-zinc-100 text-sm">
-                        {a.label}{" "}
-                        <span className="text-muted font-mono text-xs">
-                          {a.email}
-                        </span>
+                        {a.label}
                       </div>
                       <div className="text-xs text-muted mt-0.5">{a.sub}</div>
+                      <div className="text-[11px] text-subtle font-mono mt-0.5">
+                        {a.email}
+                      </div>
                     </div>
-                    <div className="text-xs text-accent opacity-0 group-hover:opacity-100 transition-opacity">
-                      Sign in →
+                    <div className="text-xs text-accent opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                      Continue →
                     </div>
                   </div>
                   {busy === a.email && (
@@ -210,10 +209,6 @@ export default function LoginPage() {
               </li>
             ))}
           </ul>
-          <p className="text-xs text-subtle border-t border-border pt-3">
-            Demo password (shared, all accounts):{" "}
-            <code className="text-zinc-300 font-mono">{DEMO_PASSWORD}</code>
-          </p>
         </section>
       </div>
     </main>

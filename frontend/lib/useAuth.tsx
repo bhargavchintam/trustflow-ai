@@ -22,6 +22,8 @@ function deriveIdentityFromEmail(email: string): Identity {
   const local = (localRaw ?? "user").toLowerCase().replace(/[^a-z0-9_-]+/g, "") || "user";
   const domain = (domainRaw ?? "demo").toLowerCase();
   const SPECIAL: Record<string, string> = {
+    "acme.com": "tenant_acme",
+    "globex.com": "tenant_globex",
     "acme.demo": "tenant_acme",
     "globex.demo": "tenant_globex",
   };

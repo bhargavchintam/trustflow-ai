@@ -1,11 +1,12 @@
 """Email → (tenant_id, user_id, role) mapping.
 
 Open sign-up: any email is accepted. Tenant is derived from email domain
-so each company gets its own isolated tenant naturally. Two domains are
-special-cased so the demo data (Bob / Charlie pre-seeds) lines up:
+so each company gets its own isolated tenant naturally. Known company
+domains map to stable tenant IDs so the pre-seeded data (Maya/Drew at
+Acme; Priya at Globex) is reachable without recomputing tenant slugs.
 
-  *@acme.demo   -> tenant_acme
-  *@globex.demo -> tenant_globex
+  *@acme.com    -> tenant_acme
+  *@globex.com  -> tenant_globex
   any other     -> tenant_<sanitized-domain>
 
 Role: admin@<anything> -> "admin"; everyone else -> "employee".
@@ -16,6 +17,9 @@ from __future__ import annotations
 import re
 
 SPECIAL_DOMAINS = {
+    "acme.com": "tenant_acme",
+    "globex.com": "tenant_globex",
+    # Backwards compat for users who already signed up under .demo.
     "acme.demo": "tenant_acme",
     "globex.demo": "tenant_globex",
 }
