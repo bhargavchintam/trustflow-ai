@@ -29,11 +29,26 @@ export function MessageBubble({
         {!isUser && (msg.route || msg.latencyMs != null) && (
           <div className="flex flex-wrap items-center gap-1.5 mb-1">
             <RouteBadge route={msg.route} />
-            <LatencyPill ms={msg.latencyMs} />
+            <LatencyPill
+              ms={msg.latencyMs}
+              promptTokens={msg.promptTokens}
+              completionTokens={msg.completionTokens}
+              costUsd={msg.costUsd}
+            />
+            {msg.streaming && msg.phase && (
+              <span className="pill border-accent/40 text-accent bg-accent/10 animate-pulse">
+                {msg.phase}…
+              </span>
+            )}
           </div>
         )}
-        <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
-        {!isUser && msg.messageId && (
+        <div className="whitespace-pre-wrap leading-relaxed">
+          {msg.content}
+          {msg.streaming && msg.content && (
+            <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-accent/70 align-middle animate-pulse" />
+          )}
+        </div>
+        {!isUser && !msg.streaming && msg.messageId && (
           <TracePanel
             tenant={tenant}
             user={user}

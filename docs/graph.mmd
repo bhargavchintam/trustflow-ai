@@ -1,0 +1,23 @@
+---
+config:
+  flowchart:
+    curve: linear
+---
+graph TD;
+	__start__([<p>__start__</p>]):::first
+	triage(triage)
+	retrieve(retrieve)
+	diagnose(diagnose)
+	resolve(resolve)
+	memwrite(memwrite)
+	__end__([<p>__end__</p>]):::last
+	__start__ --> triage;
+	diagnose -.-> resolve;
+	resolve --> memwrite;
+	retrieve --> diagnose;
+	triage --> retrieve;
+	memwrite --> __end__;
+	diagnose -.-> diagnose;
+	classDef default fill:#f2f0ff,line-height:1.2
+	classDef first fill-opacity:0
+	classDef last fill:#bfb6fc

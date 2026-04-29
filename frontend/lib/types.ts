@@ -27,6 +27,18 @@ export interface ChatMessage {
   route?: RouteDecision;
   latencyMs?: number;
   messageId?: string;
+  promptTokens?: number;
+  completionTokens?: number;
+  costUsd?: number;
+  streaming?: boolean;
+  phase?: string;
+}
+
+export interface HealthStatus {
+  status: "ok" | "degraded" | "error" | "unknown";
+  db: { ok: boolean; msg?: string };
+  llm: { ok: boolean; msg?: string };
+  embedding: { ok: boolean; msg?: string };
 }
 
 export interface TraceEvent {

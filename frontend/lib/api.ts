@@ -1,4 +1,10 @@
-import type { EvalDashboardData, MemoryAll, RouteDecision, TraceEvent } from "./types";
+import type {
+  EvalDashboardData,
+  HealthStatus,
+  MemoryAll,
+  RouteDecision,
+  TraceEvent,
+} from "./types";
 
 export const API_BASE =
   typeof window === "undefined"
@@ -15,9 +21,19 @@ function headers(tenant: string, user: string, sessionId: string): HeadersInit {
   };
 }
 
+export interface ChatStreamMessage {
+  content: string;
+  latency_ms: number;
+  message_id: string;
+  session_id: string;
+  prompt_tokens?: number;
+  completion_tokens?: number;
+  cost_usd?: number;
+}
+
 export interface StreamResult {
   route?: RouteDecision;
-  message?: { content: string; latency_ms: number; message_id: string; session_id: string };
+  message?: ChatStreamMessage;
 }
 
 export async function streamChat(opts: {
@@ -27,7 +43,9 @@ export async function streamChat(opts: {
   input: string;
   forceRoute?: "dag" | "react";
   onRoute?: (r: RouteDecision) => void;
-  onMessage?: (m: StreamResult["message"]) => void;
+  onDelta?: (text: string) => void;
+  onPhase?: (phase: string) => void;
+  onMessage?: (m: ChatStreamMessage) => void;
   onDone?: () => void;
 }): Promise<StreamResult> {
   const body = JSON.stringify({ input: opts.input, force_route: opts.forceRoute ?? null });
@@ -54,10 +72,19 @@ export async function streamChat(opts: {
       if (line.startsWith("event: ")) {
         lastEvent = line.slice("event: ".length).trim();
       } else if (line.startsWith("data: ")) {
-        const data = JSON.parse(line.slice("data: ".length));
+        let data: any;
+        try {
+          data = JSON.parse(line.slice("data: ".length));
+        } catch {
+          continue;
+        }
         if (lastEvent === "route") {
           out.route = data;
           opts.onRoute?.(data);
+        } else if (lastEvent === "delta") {
+          opts.onDelta?.(data.text ?? "");
+        } else if (lastEvent === "phase") {
+          opts.onPhase?.(data.phase ?? "");
         } else if (lastEvent === "message") {
           out.message = data;
           opts.onMessage?.(data);
@@ -68,6 +95,19 @@ export async function streamChat(opts: {
     }
   }
   return out;
+}
+
+export async function fetchHealth(): Promise<HealthStatus> {
+  const r = await fetch(`${API_BASE}/healthz`, { cache: "no-store" });
+  if (!r.ok) {
+    return {
+      status: "error",
+      db: { ok: false },
+      llm: { ok: false },
+      embedding: { ok: false },
+    };
+  }
+  return (await r.json()) as HealthStatus;
 }
 
 export async function fetchMemory(

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { MemoryInspector } from "@/components/memory/MemoryInspector";
 import { DemoControls } from "@/components/layout/DemoControls";
+import { HealthDot } from "@/components/layout/HealthDot";
 import { warmup } from "@/lib/api";
 
 const TENANT = "tenant_acme";
@@ -43,8 +44,11 @@ export default function Home() {
             evaluation
           </p>
         </div>
-        <div className="text-xs text-muted">
-          tenant: <span className="font-mono text-zinc-300">{TENANT}</span>
+        <div className="flex items-center gap-4 text-xs text-muted">
+          <HealthDot />
+          <div>
+            tenant: <span className="font-mono text-zinc-300">{TENANT}</span>
+          </div>
         </div>
       </header>
 

@@ -7,14 +7,21 @@ the Resolve node finalizes and we write to memory.
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
 import time
-from typing import Any
+from typing import Any, AsyncIterator
 from uuid import UUID
 
-from anthropic import AsyncAnthropic
+from anthropic import APIStatusError, AsyncAnthropic
+from tenacity import (
+    retry,
+    retry_if_exception,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from app.audit.logger import log_event
 from app.config import get_settings
@@ -25,6 +32,20 @@ from app.policy import gateway
 from app.tools.registry import tool_descriptions
 
 log = logging.getLogger(__name__)
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    if isinstance(exc, APIStatusError):
+        return 500 <= exc.status_code < 600 or exc.status_code == 429
+    return False
+
+
+_anthropic_retry = retry(
+    stop=stop_after_attempt(3),
+    wait=wait_exponential(multiplier=0.5, min=0.5, max=4),
+    retry=retry_if_exception(_is_retryable),
+    reraise=True,
+)
 
 _TOOL_CALL_RE = re.compile(
     r"<tool_call\s+name=\"(?P<name>[^\"]+)\"\s*>\s*<args>(?P<args>.*?)</args>\s*</tool_call>",
@@ -179,6 +200,11 @@ def _build_messages(state: GraphState) -> list[dict[str, Any]]:
     return [{"role": "user", "content": "\n\n".join(user_blocks)}]
 
 
+@_anthropic_retry
+async def _create_message(client: AsyncAnthropic, **kwargs):
+    return await client.messages.create(**kwargs)
+
+
 async def diagnose(state: GraphState) -> GraphState:
     identity = state["identity"]
     correlation_id = UUID(state["correlation_id"])
@@ -187,7 +213,8 @@ async def diagnose(state: GraphState) -> GraphState:
     client = AsyncAnthropic(api_key=settings.anthropic_api_key)
 
     started = time.monotonic()
-    response = await client.messages.create(
+    response = await _create_message(
+        client,
         model=settings.model_reasoning,
         max_tokens=600,
         system=system_prompt(identity),
@@ -282,7 +309,8 @@ async def resolve(state: GraphState) -> GraphState:
             ),
         }
     ]
-    response = await client.messages.create(
+    response = await _create_message(
+        client,
         model=settings.model_reasoning,
         max_tokens=500,
         system=system_prompt(identity),
@@ -393,6 +421,134 @@ def get_graph():
     if _compiled_graph is None:
         _compiled_graph = build_graph()
     return _compiled_graph
+
+
+async def run_react_streaming(
+    *,
+    identity: Identity,
+    user_input: str,
+    correlation_id: UUID,
+    message_id: UUID,
+) -> AsyncIterator[tuple[str, Any]]:
+    """Run the ReAct path with token-by-token streaming on the final response.
+
+    Yields tuples (event_type, payload):
+      ("phase", "triage" | "retrieve" | "diagnose" | "resolve" | "memwrite")
+      ("delta", text_chunk)
+      ("done", {"final_response", "prompt_tokens", "completion_tokens", "cost_usd"})
+    """
+    state: GraphState = {
+        "identity": identity,
+        "correlation_id": str(correlation_id),
+        "message_id": str(message_id),
+        "user_input": user_input,
+    }
+
+    yield ("phase", "triage")
+    state = await triage(state)
+    yield ("phase", "retrieve")
+    state = await retrieve(state)
+
+    while True:
+        yield ("phase", "diagnose")
+        state = await diagnose(state)
+        if should_continue(state) == "resolve":
+            break
+
+    yield ("phase", "resolve")
+
+    if state.get("final_response"):
+        text = state["final_response"]
+        chunk_size = 8
+        for i in range(0, len(text), chunk_size):
+            yield ("delta", text[i:i + chunk_size])
+            await asyncio.sleep(0.015)
+    else:
+        settings = get_settings()
+        client = AsyncAnthropic(api_key=settings.anthropic_api_key)
+        msgs = _build_messages(state) + [
+            {
+                "role": "user",
+                "content": (
+                    "Based on the tool results above, give the user a clear, concise final answer. "
+                    "Do NOT propose any more tool calls."
+                ),
+            }
+        ]
+        started = time.monotonic()
+        full_text = ""
+        attempt = 0
+        last_exc: BaseException | None = None
+        while attempt < 3:
+            attempt += 1
+            try:
+                async with client.messages.stream(
+                    model=settings.model_reasoning,
+                    max_tokens=500,
+                    system=system_prompt(identity),
+                    messages=msgs,
+                ) as stream:
+                    full_text = ""
+                    async for chunk in stream.text_stream:
+                        if chunk:
+                            yield ("delta", chunk)
+                            full_text += chunk
+                    final_msg = await stream.get_final_message()
+                state["prompt_tokens"] += final_msg.usage.input_tokens
+                state["completion_tokens"] += final_msg.usage.output_tokens
+                latency = int((time.monotonic() - started) * 1000)
+                cost = (
+                    final_msg.usage.input_tokens * SONNET_INPUT_PER_MTOK
+                    + final_msg.usage.output_tokens * SONNET_OUTPUT_PER_MTOK
+                ) / 1_000_000
+                await log_event(
+                    correlation_id=correlation_id,
+                    identity=identity,
+                    message_id=message_id,
+                    event_type="llm_call",
+                    payload={
+                        "model": settings.model_reasoning,
+                        "input_tokens": final_msg.usage.input_tokens,
+                        "output_tokens": final_msg.usage.output_tokens,
+                        "cost_usd": round(cost, 6),
+                        "stage": "resolve_streaming",
+                    },
+                    latency_ms=latency,
+                )
+                last_exc = None
+                break
+            except Exception as e:
+                last_exc = e
+                if not _is_retryable(e) or attempt >= 3:
+                    break
+                await asyncio.sleep(0.5 * (2 ** (attempt - 1)))
+        if last_exc is not None and not full_text:
+            log.warning("resolve streaming failed: %s", last_exc)
+            full_text = "I gathered some diagnostics but hit a model error. I'll file a ticket so the IT team can take a closer look."
+            for i in range(0, len(full_text), 8):
+                yield ("delta", full_text[i:i + 8])
+                await asyncio.sleep(0.015)
+        cleaned = _TOOL_CALL_RE.sub("", full_text).strip()
+        state["final_response"] = cleaned or full_text or (
+            "I've gathered some diagnostics. Let's file a ticket so the IT team can take a closer look."
+        )
+
+    yield ("phase", "memwrite")
+    await memwrite(state)
+
+    p = state.get("prompt_tokens", 0)
+    c = state.get("completion_tokens", 0)
+    total_cost = round((p * SONNET_INPUT_PER_MTOK + c * SONNET_OUTPUT_PER_MTOK) / 1_000_000, 6)
+
+    yield (
+        "done",
+        {
+            "final_response": state.get("final_response", ""),
+            "prompt_tokens": p,
+            "completion_tokens": c,
+            "cost_usd": total_cost,
+        },
+    )
 
 
 async def run_react(

@@ -34,6 +34,12 @@ Click **View eval dashboard** → measured numbers including a 100% cross-tenant
 
 ## Architecture
 
+LangGraph state machine (rendered from the live code via `backend/scripts/render_graph.py`):
+
+![LangGraph state machine](docs/graph.png)
+
+The conditional edge from `diagnose` runs the ReAct loop until the agent stops proposing tool calls (or hits `max_iterations=4` / per-session token budget). The full request path:
+
 ```
         Browser (Next.js + shadcn — Alice | Bob split panels)
                     + Trace Panel + Eval Dashboard

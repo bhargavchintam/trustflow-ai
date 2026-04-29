@@ -42,6 +42,28 @@ VPN_PROCEDURAL = {
     ],
 }
 
+EMAIL_SLOW_PROCEDURAL = {
+    "problem_signature": "email_slow_outlook_macos",
+    "steps": [
+        {"action": "check Outlook profile size and OST file integrity", "tool": None},
+        {"action": "disable third-party Outlook add-ins (Settings -> Add-ins -> Manage)", "tool": None},
+        {"action": "rebuild OST cache: quit Outlook, delete .ost in ~/Library/Group Containers", "tool": None},
+        {"action": "if persists, file ticket for Exchange-side mailbox audit", "tool": None},
+    ],
+}
+
+TEAMS_AUDIO_PROCEDURAL = {
+    "problem_signature": "teams_audio_dropout_call",
+    "steps": [
+        {"action": "switch from VoIP to PSTN dial-in for the next 24h to confirm app vs network", "tool": None},
+        {"action": "update audio drivers and Teams to latest", "tool": None},
+        {"action": "in Teams Settings -> Devices, disable noise-suppression and re-test", "tool": None},
+        {"action": "if dropouts persist on PSTN too, escalate to network team for QoS audit", "tool": None},
+    ],
+}
+
+ALL_PROCEDURAL = [VPN_PROCEDURAL, EMAIL_SLOW_PROCEDURAL, TEAMS_AUDIO_PROCEDURAL]
+
 
 async def _ensure_user_roles() -> None:
     async with connection() as conn:
@@ -66,10 +88,11 @@ async def seed_bob() -> None:
 
     async with connection() as conn:
         async with conn.cursor() as cur:
-            await cur.execute(
-                "DELETE FROM procedural_memory WHERE tenant_id = %s AND problem_signature = %s",
-                (TENANT, VPN_PROCEDURAL["problem_signature"]),
-            )
+            for proc in ALL_PROCEDURAL:
+                await cur.execute(
+                    "DELETE FROM procedural_memory WHERE tenant_id = %s AND problem_signature = %s",
+                    (TENANT, proc["problem_signature"]),
+                )
         await conn.commit()
 
     session_id = "session_bob_2026_04_15"
@@ -83,11 +106,12 @@ async def seed_bob() -> None:
             tenant_id=TENANT, user_id="bob", fact=fact, confidence=0.9
         )
 
-    await memory.write_procedural(
-        tenant_id=TENANT,
-        problem_signature=VPN_PROCEDURAL["problem_signature"],
-        steps=VPN_PROCEDURAL["steps"],
-    )
+    for proc in ALL_PROCEDURAL:
+        await memory.write_procedural(
+            tenant_id=TENANT,
+            problem_signature=proc["problem_signature"],
+            steps=proc["steps"],
+        )
 
 
 async def main() -> None:

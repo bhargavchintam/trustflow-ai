@@ -42,37 +42,75 @@ export function ChatPanel({
       role: "user",
       content: input,
     };
-    setMessages((m) => [...m, userMsg]);
+    const asstId = crypto.randomUUID();
+    const asstSeed: ChatMessage = {
+      id: asstId,
+      role: "assistant",
+      content: "",
+      streaming: true,
+    };
+    setMessages((m) => [...m, userMsg, asstSeed]);
     setDraft("");
     setLoading(true);
 
     try {
-      const res = await streamChat({
+      await streamChat({
         tenant,
         user,
         sessionId,
         input,
         forceRoute,
+        onRoute: (route) => {
+          setMessages((m) =>
+            m.map((msg) => (msg.id === asstId ? { ...msg, route } : msg)),
+          );
+        },
+        onPhase: (phase) => {
+          setMessages((m) =>
+            m.map((msg) => (msg.id === asstId ? { ...msg, phase } : msg)),
+          );
+        },
+        onDelta: (text) => {
+          setMessages((m) =>
+            m.map((msg) =>
+              msg.id === asstId ? { ...msg, content: msg.content + text } : msg,
+            ),
+          );
+        },
+        onMessage: (final) => {
+          setMessages((m) =>
+            m.map((msg) =>
+              msg.id === asstId
+                ? {
+                    ...msg,
+                    content: final?.content ?? msg.content,
+                    latencyMs: final?.latency_ms,
+                    messageId: final?.message_id,
+                    promptTokens: final?.prompt_tokens,
+                    completionTokens: final?.completion_tokens,
+                    costUsd: final?.cost_usd,
+                    streaming: false,
+                    phase: undefined,
+                  }
+                : msg,
+            ),
+          );
+        },
       });
-      const asst: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: res.message?.content ?? "",
-        route: res.route,
-        latencyMs: res.message?.latency_ms,
-        messageId: res.message?.message_id ?? res.route?.message_id,
-      };
-      setMessages((m) => [...m, asst]);
       onAfterSend?.();
     } catch (e: any) {
-      setMessages((m) => [
-        ...m,
-        {
-          id: crypto.randomUUID(),
-          role: "assistant",
-          content: `[error] ${e?.message ?? "request failed"}`,
-        },
-      ]);
+      setMessages((m) =>
+        m.map((msg) =>
+          msg.id === asstId
+            ? {
+                ...msg,
+                content: `[error] ${e?.message ?? "request failed"}`,
+                streaming: false,
+                phase: undefined,
+              }
+            : msg,
+        ),
+      );
     } finally {
       setLoading(false);
     }
