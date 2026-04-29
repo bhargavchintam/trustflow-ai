@@ -41,13 +41,17 @@ def judge(case: dict[str, Any], actual: dict[str, Any]) -> tuple[bool, str]:
 
     if cat == "memory":
         events = actual.get("trace_events", [])
-        proc_hits = 0
+        ep, sem, proc = 0, 0, 0
         for e in events:
             if e.get("event_type") == "memory_read":
-                proc_hits += int(e.get("payload", {}).get("tier_procedural_hits", 0) or 0)
-        used = proc_hits > 0
-        passed = used == expected.get("used_procedural_memory", False)
-        return passed, f"procedural_hits={proc_hits}"
+                p = e.get("payload", {})
+                ep += int(p.get("tier_episodic_hits", 0) or 0)
+                sem += int(p.get("tier_semantic_hits", 0) or 0)
+                proc += int(p.get("tier_procedural_hits", 0) or 0)
+        # Personal memory = user-scoped (episodic + semantic). Procedural is org-shared.
+        used_personal = (ep + sem) > 0
+        passed = used_personal == expected.get("used_personal_memory", False)
+        return passed, f"episodic={ep} semantic={sem} procedural={proc}"
 
     if cat == "tenant_isolation":
         events = actual.get("trace_events", [])

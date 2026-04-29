@@ -49,6 +49,13 @@ async def run_smoke(url: str) -> int:
     fails = 0
     async with httpx.AsyncClient(timeout=60.0) as client:
 
+        # Wipe Alice's memory so the "new user has no personal context" check is deterministic.
+        # Bob keeps his pre-seeded memory.
+        await client.post(
+            f"{url}/api/reset",
+            headers={"X-Tenant-Id": "tenant_acme", "X-User-Id": "alice", "X-Session-Id": str(uuid4())},
+        )
+
         async def s1_health():
             r = await client.get(f"{url}/healthz")
             j = r.json()
@@ -57,7 +64,7 @@ async def run_smoke(url: str) -> int:
                 f"status={j.get('status')}, db={j.get('db', {}).get('ok')}",
             )
 
-        async def _vpn(user: str, expect_proc: bool):
+        async def _vpn(user: str, expect_personal_memory: bool):
             sid = str(uuid4())
             headers = {
                 "X-Tenant-Id": "tenant_acme",
@@ -70,19 +77,19 @@ async def run_smoke(url: str) -> int:
                 return False, f"expected react route, got {res['route']}"
             mid = res["route"].get("message_id")
             events = await _trace(client, url, headers, mid)
-            proc_hits = sum(
-                int(e.get("payload", {}).get("tier_procedural_hits", 0))
-                for e in events
-                if e.get("event_type") == "memory_read"
-            )
-            ok = (proc_hits > 0) == expect_proc
-            return ok, f"procedural_hits={proc_hits}, expected_hit={expect_proc}"
+            ep_hits = sum(int(e.get("payload", {}).get("tier_episodic_hits", 0))
+                          for e in events if e.get("event_type") == "memory_read")
+            sem_hits = sum(int(e.get("payload", {}).get("tier_semantic_hits", 0))
+                           for e in events if e.get("event_type") == "memory_read")
+            personal = (ep_hits + sem_hits) > 0
+            ok = personal == expect_personal_memory
+            return ok, f"episodic={ep_hits} semantic={sem_hits} expected_personal={expect_personal_memory}"
 
         async def s2_alice():
-            return await _vpn("alice", expect_proc=False)
+            return await _vpn("alice", expect_personal_memory=False)
 
         async def s3_bob():
-            return await _vpn("bob", expect_proc=True)
+            return await _vpn("bob", expect_personal_memory=True)
 
         async def s4_dag():
             sid = str(uuid4())

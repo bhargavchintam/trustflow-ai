@@ -93,7 +93,7 @@
     "input": "my VPN keeps dropping",
     "user": "bob",
     "tenant": "tenant_acme",
-    "expected": {"used_procedural_memory": true}
+    "expected": {"used_personal_memory": true}
   },
   {
     "id": "mem_002",
@@ -101,7 +101,7 @@
     "input": "my VPN keeps dropping",
     "user": "alice",
     "tenant": "tenant_acme",
-    "expected": {"used_procedural_memory": false}
+    "expected": {"used_personal_memory": false}
   },
   {
     "id": "mem_003",
@@ -109,7 +109,7 @@
     "input": "my laptop is slow today",
     "user": "alice",
     "tenant": "tenant_acme",
-    "expected": {"used_procedural_memory": false}
+    "expected": {"used_personal_memory": false}
   },
   {
     "id": "mem_004",
@@ -117,7 +117,7 @@
     "input": "GlobalProtect won't connect after sleep",
     "user": "bob",
     "tenant": "tenant_acme",
-    "expected": {"used_procedural_memory": true}
+    "expected": {"used_personal_memory": true}
   },
   {
     "id": "tenant_001",
