@@ -34,6 +34,11 @@ POLICY_RULES: dict[str, PolicyRule] = {
         "requires_hitl_for": [],
         "description": "Read VPN tunnel status for the requester.",
     },
+    "file_ticket": {
+        "max_target_user": "self",
+        "requires_hitl_for": [],
+        "description": "File a support ticket. Always self-targeted; never escalates.",
+    },
 }
 
 

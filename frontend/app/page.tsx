@@ -139,35 +139,39 @@ function AdminPanel({
 
   return (
     <details className="card-elevated" open>
-      <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium">
-        <Settings2 className="w-4 h-4 text-accent" />
-        Admin tools
-        <span className="ml-auto text-xs text-muted font-normal">
+      <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium select-none">
+        <Settings2 className="w-4 h-4 text-accent shrink-0" />
+        <span>Admin tools</span>
+        <span className="ml-auto text-xs text-muted font-normal hidden sm:inline">
           visible because role=admin
         </span>
       </summary>
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button onClick={reseed} disabled={working !== null} className="btn">
-          {working === "reseed" ? "Reseeding…" : "Reseed Bob + tenant_globex"}
-        </button>
-        <button onClick={wipeMine} disabled={working !== null} className="btn">
-          {working === "wipe" ? "Wiping…" : "Wipe my memory"}
-        </button>
-        <button onClick={() => warmup()} className="btn">
-          Warm up
-        </button>
-        <label className="flex items-center gap-2 text-sm cursor-pointer ml-1">
-          <input
-            type="checkbox"
-            checked={forceReact}
-            onChange={(e) => onForceReactChange(e.target.checked)}
-            className="accent-accent"
-          />
-          <span>Force ReAct (bypass DAG router)</span>
-        </label>
-        <Link href="/eval" className="btn-accent ml-auto text-xs">
-          View eval dashboard →
-        </Link>
+      <div className="mt-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <button onClick={reseed} disabled={working !== null} className="btn">
+            {working === "reseed" ? "Reseeding…" : "Reseed Bob + tenant_globex"}
+          </button>
+          <button onClick={wipeMine} disabled={working !== null} className="btn">
+            {working === "wipe" ? "Wiping…" : "Wipe my memory"}
+          </button>
+          <button onClick={() => warmup()} className="btn">
+            Warm up
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              checked={forceReact}
+              onChange={(e) => onForceReactChange(e.target.checked)}
+              className="accent-accent"
+            />
+            <span>Force ReAct (bypass DAG router)</span>
+          </label>
+          <Link href="/eval" className="btn-accent text-xs">
+            View eval dashboard →
+          </Link>
+        </div>
       </div>
     </details>
   );

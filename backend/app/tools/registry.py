@@ -14,6 +14,7 @@ from typing import Any, Awaitable, Callable
 
 from app.models import Identity
 from app.tools.check_vpn_status import check_vpn_status
+from app.tools.file_ticket import file_ticket
 from app.tools.reset_password import reset_password
 from app.tools.vpn_diagnostic import vpn_diagnostic
 
@@ -23,6 +24,7 @@ TOOL_REGISTRY: dict[str, ToolImpl] = {
     "vpn_diagnostic": vpn_diagnostic,
     "check_vpn_status": check_vpn_status,
     "reset_password": reset_password,
+    "file_ticket": file_ticket,
 }
 
 
@@ -42,5 +44,10 @@ def tool_descriptions() -> dict[str, str]:
         "reset_password": (
             "Initiate a password reset for the requester. Self-only; admin/executive "
             "requires HITL approval."
+        ),
+        "file_ticket": (
+            "File a support ticket on behalf of the requester. Args: category (e.g. "
+            "'software_request', 'hardware', 'access'), summary. Always allowed for self; "
+            "use this when you can't resolve a problem yourself."
         ),
     }

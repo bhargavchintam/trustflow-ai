@@ -8,9 +8,10 @@ from app.models import RouteDecision
 DAG_KEYWORDS: dict[str, str] = {
     r"\breset (my )?password\b": "password_reset",
     r"\bunlock (my )?account\b": "account_unlock",
+    r"\b(?:request|need|install|access to|provision|grant me)\s+\w": "request_software",
 }
 
-HANDLED_DAG_INTENTS = {"password_reset"}
+HANDLED_DAG_INTENTS = {"password_reset", "request_software"}
 
 
 def classify(input_text: str, force_route: str | None = None) -> RouteDecision:

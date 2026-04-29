@@ -13,22 +13,22 @@ export function Header() {
 
   return (
     <header className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-20">
-      <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+      <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-2 shrink-0">
           <ShieldCheck className="w-5 h-5 text-accent" />
           <span className="font-semibold tracking-tight">TrustFlow AI</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
           <HealthDot />
           <div className="chip">
             <span className="text-subtle">tenant</span>
-            <span className="font-mono text-zinc-200">{identity.tenant_id}</span>
+            <span className="font-mono text-zinc-200 ml-1">{identity.tenant_id}</span>
           </div>
           {isAdmin && (
             <span className="pill border-accent/40 text-accent bg-accent/10">admin</span>
           )}
-          <div className="flex items-center gap-2 pl-3 border-l border-border">
-            <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/40 flex items-center justify-center text-sm font-semibold text-accent-soft">
+          <div className="flex items-center gap-2.5 pl-3 border-l border-border">
+            <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/40 flex items-center justify-center text-sm font-semibold text-accent-soft shrink-0">
               {initials}
             </div>
             <div className="text-sm leading-tight">

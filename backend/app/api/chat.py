@@ -16,7 +16,7 @@ from app.graph.agent import SONNET_INPUT_PER_MTOK, SONNET_OUTPUT_PER_MTOK, run_r
 from app.models import ChatRequest, Identity
 from app.policy import gateway
 from app.router import coordinator
-from app.router.dag_flows import password_reset
+from app.router.dag_flows import password_reset, request_software
 
 router = APIRouter()
 
@@ -103,8 +103,12 @@ async def chat(req: ChatRequest, identity: Identity = Depends(resolve_identity))
         }
         yield {"event": "route", "data": json.dumps(route_payload)}
 
-        if decision.route == "dag" and decision.intent == "password_reset":
-            response = await password_reset.run(
+        DAG_DISPATCH = {
+            "password_reset": password_reset.run,
+            "request_software": request_software.run,
+        }
+        if decision.route == "dag" and decision.intent in DAG_DISPATCH:
+            response = await DAG_DISPATCH[decision.intent](
                 identity=identity,
                 user_input=req.input,
                 correlation_id=correlation_id,

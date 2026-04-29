@@ -62,7 +62,65 @@ TEAMS_AUDIO_PROCEDURAL = {
     ],
 }
 
-ALL_PROCEDURAL = [VPN_PROCEDURAL, EMAIL_SLOW_PROCEDURAL, TEAMS_AUDIO_PROCEDURAL]
+SLACK_SEARCH_PROCEDURAL = {
+    "problem_signature": "slack_search_returns_no_results",
+    "steps": [
+        {"action": "verify channel scope (DMs and private channels are searched separately)", "tool": None},
+        {"action": "rebuild local search index: Help -> Troubleshoot -> Reset Cache", "tool": None},
+        {"action": "if still failing, check Workspace search-availability setting (admin)", "tool": None},
+    ],
+}
+
+ZOOM_ECHO_PROCEDURAL = {
+    "problem_signature": "zoom_audio_echo_in_meetings",
+    "steps": [
+        {"action": "ask call participants to mute when not speaking; echo is usually a single mic", "tool": None},
+        {"action": "in Zoom Settings -> Audio, enable 'Suppress background noise' (Auto)", "tool": None},
+        {"action": "switch to a wired headset; built-in laptop speaker + mic creates feedback", "tool": None},
+        {"action": "if echo persists, run Audio Test Speaker & Microphone in Settings", "tool": None},
+    ],
+}
+
+PRINTER_QUEUE_PROCEDURAL = {
+    "problem_signature": "printer_queue_stuck_jobs",
+    "steps": [
+        {"action": "open the printer queue and Cancel All Documents", "tool": None},
+        {"action": "restart the print spooler service (Windows: services.msc -> Print Spooler -> Restart)", "tool": None},
+        {"action": "remove and re-add the printer if it's an IP printer that was offline", "tool": None},
+        {"action": "if multiple users hit this same printer, escalate to facilities (driver issue)", "tool": None},
+    ],
+}
+
+GIT_AUTH_PROCEDURAL = {
+    "problem_signature": "git_clone_authentication_failed_github",
+    "steps": [
+        {"action": "verify SSH key is loaded: ssh-add -l", "tool": None},
+        {"action": "test SSH auth: ssh -T git@github.com (expect 'successfully authenticated' message)", "tool": None},
+        {"action": "rotate the SSH key if the org enforces 90-day expiry", "tool": None},
+        {"action": "if HTTPS, ensure GitHub PAT has the correct scopes (repo, read:org)", "tool": None},
+    ],
+}
+
+WIFI_AUTOCONNECT_PROCEDURAL = {
+    "problem_signature": "wifi_does_not_autoconnect_on_wake",
+    "steps": [
+        {"action": "in Network preferences, set the office SSID priority to top", "tool": None},
+        {"action": "uncheck 'Disable wifi when ethernet is connected' if dock-tethered", "tool": None},
+        {"action": "forget and rejoin SSID with WPA2-Enterprise creds", "tool": None},
+        {"action": "if still failing on multiple devices, escalate to networking (DHCP exhaustion)", "tool": None},
+    ],
+}
+
+ALL_PROCEDURAL = [
+    VPN_PROCEDURAL,
+    EMAIL_SLOW_PROCEDURAL,
+    TEAMS_AUDIO_PROCEDURAL,
+    SLACK_SEARCH_PROCEDURAL,
+    ZOOM_ECHO_PROCEDURAL,
+    PRINTER_QUEUE_PROCEDURAL,
+    GIT_AUTH_PROCEDURAL,
+    WIFI_AUTOCONNECT_PROCEDURAL,
+]
 
 
 async def _ensure_user_roles() -> None:

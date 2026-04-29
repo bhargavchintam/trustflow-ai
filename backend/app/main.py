@@ -71,9 +71,25 @@ if STATIC_DIR.exists():
     async def index():
         return FileResponse(STATIC_DIR / "index.html")
 
-    @app.get("/eval")
-    async def eval_page():
-        path = STATIC_DIR / "eval" / "index.html"
-        if path.exists():
-            return FileResponse(path)
+    @app.get("/{full_path:path}")
+    async def spa_catchall(full_path: str):
+        """Serve Next.js static-exported pages for any non-API path.
+        Resolves <full_path>/index.html, then <full_path>.html, then root.
+        Strips traversal attempts and hides files outside STATIC_DIR.
+        Registered LAST so /api/*, /healthz, /_next/* take precedence."""
+        if full_path.startswith("api/"):
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="not found")
+        candidates = [
+            STATIC_DIR / full_path / "index.html",
+            STATIC_DIR / f"{full_path}.html",
+            STATIC_DIR / full_path,
+        ]
+        for p in candidates:
+            try:
+                p_resolved = p.resolve()
+                if p_resolved.is_file() and STATIC_DIR.resolve() in p_resolved.parents:
+                    return FileResponse(p_resolved)
+            except (OSError, ValueError):
+                continue
         return FileResponse(STATIC_DIR / "index.html")
