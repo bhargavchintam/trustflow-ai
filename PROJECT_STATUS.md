@@ -6,15 +6,17 @@ Living checkpoint for the TrustFlow AI 24-hour build. Updated by the `project-st
 
 ## Current phase
 
-**Block: H19-H21 Production deploy** — code is complete and verified locally; awaiting AWS provisioning + `.env` fill to run smoke tests + deploy.
+**Block: H22-H23.5 README polish + Loom recording** — App Runner deployed and healthy, all 5 smoke-test scenarios PASS against the deployed URL.
 
 ## Critical URLs
 
 | | |
 |---|---|
-| Deployed app | _not yet_ |
-| GitHub repo | _not yet — about to create_ |
-| Loom walkthrough | _not yet — record after deploy_ |
+| Deployed app | https://2fgmvxxdt3.us-east-1.awsapprunner.com |
+| GitHub repo | https://github.com/bhargavchintam/trustflow-ai (private) |
+| Loom walkthrough | _record next_ |
+| App Runner ARN | arn:aws:apprunner:us-east-1:772706200954:service/trustflow-ai/e0b75207b1e343569aacc1b3804a521d |
+| ECR image | 772706200954.dkr.ecr.us-east-1.amazonaws.com/trustflow-ai:latest |
 
 ## Done ✅
 

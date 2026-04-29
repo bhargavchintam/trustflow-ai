@@ -4,9 +4,9 @@
 
 > *"The LLM can reason but cannot act. Every tool call passes through a policy engine that enforces tenant boundary and user permissions. Every decision is traceable, every behaviour is measurable, and the architecture is tenant-aware end-to-end — even where I deliberately deferred the multi-tenant deployment plumbing as out-of-scope for a 24-hour build."*
 
-- **Live demo:** _replace with App Runner URL after deploy_
-- **Loom walkthrough (90s):** _replace_
-- **Repo:** _replace_
+- **Live demo:** https://2fgmvxxdt3.us-east-1.awsapprunner.com
+- **Loom walkthrough (90s):** _add after recording_
+- **Repo:** https://github.com/bhargavchintam/trustflow-ai
 
 ---
 
