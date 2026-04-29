@@ -20,13 +20,17 @@ EVAL_PATH = Path(__file__).parent / "synthetic_eval.json"
 
 async def _run_case(client: httpx.AsyncClient, api_url: str, case: dict, run_id: str) -> dict:
     session_id = f"eval_{run_id}_{case['id']}"
+    tenant = case.get("tenant", "tenant_acme")
+    user = case.get("user", "alice")
     headers = {
-        "X-Tenant-Id": case.get("tenant", "tenant_acme"),
-        "X-User-Id": case.get("user", "alice"),
+        "X-Tenant-Id": tenant,
+        "X-User-Id": user,
         "X-Session-Id": session_id,
         "Content-Type": "application/json",
         "Accept": "text/event-stream",
     }
+    if case["category"] == "memory" and user == "alice":
+        await client.post(f"{api_url}/api/reset", headers=headers)
     body = {"input": case["input"]}
 
     started = time.monotonic()
