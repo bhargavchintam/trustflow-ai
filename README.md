@@ -218,6 +218,16 @@ References that informed these choices:
 
 ---
 
+## Project automation (hooks, skills, agents)
+
+The repo ships with project-local Claude Code automation in `.claude/` that mechanically enforces the security model. Three layers:
+
+- **3 hooks** (`.claude/hooks/`) auto-fire on tool calls — `precommit-guard.sh` blocks commits with tenant-isolation or secret-leak violations; `predeploy-reminder.sh` prints a smoke-test reminder; `postedit-policy-reminder.sh` nudges to invoke the policy-auditor agent after security-spine edits.
+- **7 skills** (`.claude/skills/*/SKILL.md`) invoked on demand — `run-evals`, `smoke-test`, `deploy-apprunner`, `bootstrap-db`, `local-dev`, `policy-audit`, `project-status`.
+- **2 read-only review agents** (`.claude/agents/*.md`) — `policy-auditor` (security spine) and `tenant-isolation-checker` (data layer). Both currently return 0 CRITICAL findings against the tree.
+
+This means the project's *own* development workflow is checked by the same primitives that check production behaviour at runtime. Full spec in [AUTOMATION.md](AUTOMATION.md), with verification evidence for every claim.
+
 ## How to run locally
 
 ```bash

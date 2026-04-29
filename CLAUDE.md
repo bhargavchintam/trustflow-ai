@@ -91,11 +91,23 @@ aws apprunner start-deployment --service-arn $APPRUNNER_SERVICE_ARN
 - `run-evals` — run synthetic eval suite against local or deployed URL
 - `smoke-test` — run 5 demo scenarios end-to-end
 - `deploy-apprunner` — build, push, deploy, smoke-test
+- `bootstrap-db` — apply schema + run seeds (Bob + Charlie)
+- `local-dev` — start backend + frontend in parallel
+- `policy-audit` — run both review agents in parallel and consolidate findings
+- `project-status` — read/update PROJECT_STATUS.md and auto-memory
 
 ## Available agents (project-local, read-only)
 
 - `policy-auditor` — invoke after edits to `backend/app/policy/*` or `backend/app/tools/*`
 - `tenant-isolation-checker` — invoke before each commit and before deploy
+
+## Active hooks (auto-fire on tool calls)
+
+- `precommit-guard.sh` — PreToolUse on `git commit`, blocks if tenant-isolation or secret-leak violations are detected
+- `predeploy-reminder.sh` — PreToolUse on `aws apprunner start-deployment` / `docker push`, prints a smoke-test reminder
+- `postedit-policy-reminder.sh` — PostToolUse on Edit/Write under `backend/app/policy/` or `backend/app/tools/`, nudges to invoke `policy-auditor`
+
+Full automation spec lives in [AUTOMATION.md](AUTOMATION.md).
 
 ## Time budget reminder
 
