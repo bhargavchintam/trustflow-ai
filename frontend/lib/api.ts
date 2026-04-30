@@ -1,6 +1,7 @@
 import type {
   EvalDashboardData,
   HealthStatus,
+  HistoryResponse,
   MemoryAll,
   RouteDecision,
   TraceEvent,
@@ -141,6 +142,48 @@ export async function fetchTrace(
   });
   if (!r.ok) throw new Error(`trace failed: ${r.status}`);
   return (await r.json()).events as TraceEvent[];
+}
+
+export async function fetchHistory(
+  tenant: string,
+  user: string,
+  sessionId: string,
+  limit = 100,
+): Promise<HistoryResponse> {
+  const r = await fetch(
+    `${API_BASE}/api/history?session_id=${encodeURIComponent(sessionId)}&limit=${limit}`,
+    { headers: await headers(tenant, user, sessionId) },
+  );
+  if (!r.ok) throw new Error(`history failed: ${r.status}`);
+  return r.json();
+}
+
+export interface BackendAuthResponse {
+  access_token: string;
+  refresh_token: string | null;
+  user: { id: string | null; email: string | null };
+  identity: { tenant_id: string; user_id: string; session_id: string; role: string };
+}
+
+export async function backendSignUp(
+  email: string,
+  password: string,
+): Promise<BackendAuthResponse> {
+  const r = await fetch(`${API_BASE}/api/auth/sign-up`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  if (!r.ok) {
+    const text = await r.text();
+    let detail = `sign-up failed: ${r.status}`;
+    try {
+      const j = JSON.parse(text);
+      if (j?.detail) detail = String(j.detail);
+    } catch {}
+    throw new Error(detail);
+  }
+  return r.json();
 }
 
 export async function fetchEval(): Promise<EvalDashboardData> {

@@ -15,7 +15,7 @@ from uuid import uuid4
 from fastapi import Cookie, Header, Query
 from psycopg.rows import dict_row
 
-from app.auth.identity_mapping import derive_identity_fields
+from app.auth.identity_mapping import derive_identity_fields, derive_role
 from app.auth.jwt_validator import TokenError, decode_token
 from app.config import get_settings
 from app.db.connection import connection
@@ -85,11 +85,12 @@ async def resolve_identity_optional(
         user_id = x_user_id or user or s.default_user_id
         sid = session_id or str(uuid4())
         db_role = await lookup_role(tenant_id, user_id)
+        fallback_role = derive_role(user_id)
         return Identity(
             tenant_id=tenant_id,
             user_id=user_id,
             session_id=sid,
-            role=db_role or "employee",  # type: ignore[arg-type]
+            role=db_role or fallback_role,  # type: ignore[arg-type]
         )
 
     return None

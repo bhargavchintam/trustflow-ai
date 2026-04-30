@@ -1,6 +1,7 @@
 "use client";
 
-import { LogOut, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { BarChart3, LogOut, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/useAuth";
 import { HealthDot } from "./HealthDot";
 
@@ -14,9 +15,19 @@ export function Header() {
   return (
     <header className="border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-20">
       <div className="max-w-[1400px] mx-auto px-5 py-3 flex items-center justify-between gap-4 flex-wrap">
-        <div className="flex items-center gap-2 shrink-0">
-          <ShieldCheck className="w-5 h-5 text-accent" />
-          <span className="font-semibold tracking-tight">TrustFlow AI</span>
+        <div className="flex items-center gap-3 shrink-0">
+          <Link href="/" className="flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-accent" />
+            <span className="font-semibold tracking-tight">TrustFlow AI</span>
+          </Link>
+          <Link
+            href="/eval"
+            className="ml-2 inline-flex items-center gap-1.5 text-sm text-muted hover:text-zinc-100 transition-colors"
+            title="Eval dashboard — measured routing, security, memory, tenant-isolation"
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>Evals</span>
+          </Link>
         </div>
         <div className="flex items-center gap-3 flex-wrap justify-end">
           <HealthDot />

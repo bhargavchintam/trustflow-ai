@@ -51,7 +51,7 @@ export default function EvalPage() {
         </div>
         <div className="flex items-center gap-3">
           <Link href="/" className="btn">
-            ← Back to demo
+            ← Back to chat
           </Link>
           <button onClick={rerun} disabled={running} className="btn-accent">
             {running ? "Re-running…" : "Re-run evals"}

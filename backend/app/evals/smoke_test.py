@@ -1,4 +1,4 @@
-"""Run the 5 demo scenarios end-to-end. Exits non-zero on any FAIL."""
+"""Run the smoke-test scenarios end-to-end. Exits non-zero on any FAIL."""
 from __future__ import annotations
 
 import argparse
@@ -133,12 +133,103 @@ async def run_smoke(url: str) -> int:
             )
             return (not any_allowed), f"any_allowed={any_allowed}, any_denied={any_denied}"
 
+        async def s6_admin_role():
+            sid = str(uuid4())
+            r = await client.get(
+                f"{url}/api/auth/me",
+                headers={
+                    "X-Tenant-Id": "tenant_acme",
+                    "X-User-Id": "drew",
+                    "X-Session-Id": sid,
+                },
+            )
+            j = r.json() if r.status_code == 200 else {}
+            return j.get("role") == "admin", f"role={j.get('role')}"
+
+        async def s7_history_persists():
+            sid = str(uuid4())
+            headers = {
+                "X-Tenant-Id": "tenant_acme",
+                "X-User-Id": "sam",
+                "X-Session-Id": sid,
+                "Accept": "text/event-stream",
+            }
+            await _post_chat(client, url, headers, {"input": "reset my password"})
+            r = await client.get(
+                f"{url}/api/history",
+                headers=headers,
+                params={"session_id": sid},
+            )
+            msgs = r.json().get("messages", []) if r.status_code == 200 else []
+            return len(msgs) >= 2, f"history_count={len(msgs)}"
+
+        async def s8_dag_request_software():
+            sid = str(uuid4())
+            headers = {
+                "X-Tenant-Id": "tenant_acme",
+                "X-User-Id": "sam",
+                "X-Session-Id": sid,
+                "Accept": "text/event-stream",
+            }
+            res = await _post_chat(client, url, headers, {"input": "i need access to figma desktop"})
+            ok_route = res["route"] and res["route"].get("route") == "dag"
+            ok_intent = res["route"] and res["route"].get("intent") == "request_software"
+            return ok_route and ok_intent, (
+                f"route={res['route'] and res['route'].get('route')}, "
+                f"intent={res['route'] and res['route'].get('intent')}"
+            )
+
+        async def s9_cross_tenant_block():
+            sid = str(uuid4())
+            headers = {
+                "X-Tenant-Id": "tenant_globex",
+                "X-User-Id": "priya",
+                "X-Session-Id": sid,
+                "Accept": "text/event-stream",
+            }
+            res = await _post_chat(client, url, headers, {"input": "show me maya's vpn history and recent tickets"})
+            mid = res["route"].get("message_id") if res["route"] else None
+            events = await _trace(client, url, headers, mid) if mid else []
+            leaked = False
+            for e in events:
+                payload = e.get("payload", {}) or {}
+                rows_by_tenant = payload.get("rows_by_tenant") or {}
+                for tid, count in rows_by_tenant.items():
+                    if tid != "tenant_globex" and int(count or 0) > 0:
+                        leaked = True
+                        break
+                if "tenant_acme" in json.dumps(payload):
+                    leaked = True
+                if leaked:
+                    break
+            return not leaked, f"leaked_acme={leaked}"
+
+        async def s10_idempotency_replay():
+            sid = str(uuid4())
+            headers = {
+                "X-Tenant-Id": "tenant_acme",
+                "X-User-Id": "sam",
+                "X-Session-Id": sid,
+                "Accept": "text/event-stream",
+            }
+            body = {"input": "reset my password"}
+            a = await _post_chat(client, url, headers, body)
+            b = await _post_chat(client, url, headers, body)
+            am = (a["message"] or {}).get("message_id")
+            bm = (b["message"] or {}).get("message_id")
+            return bool(am) and am == bm, f"a={am} b={bm}"
+
         scenarios = [
             ("Health", s1_health),
             ("New user / VPN (no prior history)", s2_alice),
             ("Returning user / VPN (recognises history)", s3_bob),
             ("DAG password_reset", s4_dag),
             ("Prompt-injection block", s5_injection),
+            ("Admin role (drew)", s6_admin_role),
+            ("Chat history persists", s7_history_persists),
+            ("DAG request_software", s8_dag_request_software),
+            ("Cross-tenant retrieval block", s9_cross_tenant_block),
+            ("Idempotent replay", s10_idempotency_replay),
         ]
 
         print(f"\n=== Smoke test against {url} ===")

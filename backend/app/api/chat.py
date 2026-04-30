@@ -16,7 +16,13 @@ from app.graph.agent import SONNET_INPUT_PER_MTOK, SONNET_OUTPUT_PER_MTOK, run_r
 from app.models import ChatRequest, Identity
 from app.policy import gateway
 from app.router import coordinator
-from app.router.dag_flows import password_reset, request_software
+from app.router.dag_flows import (
+    account_unlock,
+    distribution_list,
+    mfa_reset,
+    password_reset,
+    request_software,
+)
 
 router = APIRouter()
 
@@ -106,6 +112,9 @@ async def chat(req: ChatRequest, identity: Identity = Depends(resolve_identity))
         DAG_DISPATCH = {
             "password_reset": password_reset.run,
             "request_software": request_software.run,
+            "account_unlock": account_unlock.run,
+            "mfa_reset": mfa_reset.run,
+            "distribution_list_access": distribution_list.run,
         }
         if decision.route == "dag" and decision.intent in DAG_DISPATCH:
             response = await DAG_DISPATCH[decision.intent](

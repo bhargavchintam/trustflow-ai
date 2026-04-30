@@ -40,3 +40,6 @@ logs/
 *.sqlite
 *.db
 local_data/
+
+# Demo recording notes (private)
+RECORDING.md

@@ -2,22 +2,24 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
-import { streamChat } from "@/lib/api";
-import type { ChatMessage, Identity } from "@/lib/types";
+import { fetchHistory, streamChat } from "@/lib/api";
+import type { ChatMessage, Identity, Role } from "@/lib/types";
 import { cn, getOrCreateSessionId, resetSessionId } from "@/lib/utils";
 import { MessageBubble } from "./MessageBubble";
 
-const SAMPLE_PROMPTS: { label: string; prompt: string; route: "dag" | "react" }[] = [
-  { label: "Reset my password", prompt: "reset my password", route: "dag" },
-  { label: "Request Figma access", prompt: "I need access to Figma", route: "dag" },
-  { label: "VPN keeps dropping", prompt: "my VPN keeps dropping", route: "react" },
-  { label: "Email is slow", prompt: "my Outlook is really slow today", route: "react" },
-  { label: "Slack search broken", prompt: "Slack search isn't returning anything", route: "react" },
-  { label: "Zoom audio echo", prompt: "I'm hearing echo on every Zoom call", route: "react" },
-  { label: "Printer queue stuck", prompt: "the office printer is stuck on my job", route: "react" },
-  { label: "Git auth failing", prompt: "git push is asking for credentials again", route: "react" },
-  { label: "Wifi won't auto-connect", prompt: "my laptop won't reconnect to office wifi after sleep", route: "react" },
-  { label: "Teams calls dropping", prompt: "Teams keeps dropping calls", route: "react" },
+const SAMPLE_PROMPTS: { label: string; prompt: string }[] = [
+  { label: "Reset my password", prompt: "reset my password" },
+  { label: "Unlock my account", prompt: "I'm locked out of my account, please unlock it" },
+  { label: "Reset MFA / 2FA", prompt: "reset my MFA, I got a new phone" },
+  { label: "Request Figma access", prompt: "I need access to Figma" },
+  { label: "Join a distribution list", prompt: "add me to the distribution list eng-leads" },
+  { label: "VPN keeps dropping", prompt: "my VPN keeps dropping" },
+  { label: "Email is slow", prompt: "my Outlook is really slow today" },
+  { label: "Slack search broken", prompt: "Slack search isn't returning anything" },
+  { label: "Zoom audio echo", prompt: "I'm hearing echo on every Zoom call" },
+  { label: "Printer queue stuck", prompt: "the office printer is stuck on my job" },
+  { label: "Git auth failing", prompt: "git push is asking for credentials again" },
+  { label: "Wifi won't auto-connect", prompt: "my laptop won't reconnect to office wifi after sleep" },
 ];
 
 export function ProductChat({
@@ -40,6 +42,26 @@ export function ProductChat({
   useEffect(() => {
     setSessionId(getOrCreateSessionId(identity.user_id));
   }, [identity.user_id]);
+
+  useEffect(() => {
+    if (!sessionId) return;
+    let cancelled = false;
+    fetchHistory(identity.tenant_id, identity.user_id, sessionId)
+      .then(({ messages: rows }) => {
+        if (cancelled || rows.length === 0) return;
+        const hydrated: ChatMessage[] = rows.map((r) => ({
+          id: r.id,
+          role: r.role as Role,
+          content: r.content,
+          messageId: undefined,
+        }));
+        setMessages((current) => (current.length === 0 ? hydrated : current));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, identity.tenant_id, identity.user_id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,7 +96,14 @@ export function ProductChat({
           setMessages((m) => m.map((msg) => (msg.id === asstId ? { ...msg, route } : msg)));
         },
         onPhase: (phase) => {
-          setMessages((m) => m.map((msg) => (msg.id === asstId ? { ...msg, phase } : msg)));
+          setMessages((m) =>
+            m.map((msg) => {
+              if (msg.id !== asstId) return msg;
+              const history = msg.phaseHistory ?? [];
+              const next = history[history.length - 1] === phase ? history : [...history, phase];
+              return { ...msg, phase, phaseHistory: next };
+            }),
+          );
         },
         onDelta: (text) => {
           setMessages((m) =>
@@ -154,11 +183,10 @@ export function ProductChat({
             </div>
             <div className="space-y-1">
               <div className="text-zinc-200 text-sm font-medium">
-                Ask the agent anything about IT.
+                Ask anything about IT.
               </div>
               <div className="text-xs">
-                It'll route to a deterministic flow if it can, or reason through ReAct
-                if it has to.
+                Password resets, software access, VPN issues, account lockouts. Your conversation is saved to memory.
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2 pt-2 max-w-md mx-auto w-full">
@@ -166,23 +194,10 @@ export function ProductChat({
                 <button
                   key={p.label}
                   onClick={() => send(p.prompt)}
-                  className={cn(
-                    "btn text-xs text-left flex items-center justify-between gap-2",
-                    p.route === "dag" && "border-accent/40",
-                  )}
+                  className="btn text-xs text-left"
                   title={p.prompt}
                 >
                   <span className="truncate">{p.label}</span>
-                  <span
-                    className={cn(
-                      "pill text-[10px] shrink-0",
-                      p.route === "dag"
-                        ? "border-accent/50 text-accent bg-accent/10"
-                        : "border-zinc-600 text-zinc-400 bg-zinc-800/40",
-                    )}
-                  >
-                    {p.route === "dag" ? "DAG" : "ReAct"}
-                  </span>
                 </button>
               ))}
             </div>
@@ -203,7 +218,7 @@ export function ProductChat({
 
       {attackPrompts && attackPrompts.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border">
-          <div className="text-xs text-muted mb-1.5">Attack the agent (admin):</div>
+          <div className="text-xs text-muted mb-1.5">Red-team prompts (admin only):</div>
           <div className="flex flex-wrap gap-1.5">
             {attackPrompts.map((a) => (
               <button
@@ -228,7 +243,7 @@ export function ProductChat({
       >
         <input
           className="input flex-1"
-          placeholder={`Message TrustFlow AI as ${identity.user_id}…`}
+          placeholder="Ask TrustFlow AI…"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           disabled={loading}

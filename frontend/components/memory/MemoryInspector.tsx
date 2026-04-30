@@ -4,8 +4,21 @@ import { useEffect, useRef, useState } from "react";
 import { fetchMemory } from "@/lib/api";
 import type { MemoryAll } from "@/lib/types";
 import { cn, getOrCreateSessionId } from "@/lib/utils";
+import { Markdown } from "@/components/chat/Markdown";
 
 type Tab = "episodic" | "semantic" | "procedural";
+
+const TIER_DESCRIPTIONS: Record<Tab, string> = {
+  episodic: "Raw conversational turns. Every user message and assistant reply lands here. Used to recall what we just talked about.",
+  semantic: "Distilled facts about you (device, software, preferences). Deduplicated by similarity; corroborated facts gain confidence.",
+  procedural: "Reusable fix patterns at the workspace level. Org-scoped, not user-scoped. Looked up by problem similarity.",
+};
+
+const TIER_LABELS: Record<Tab, string> = {
+  episodic: "Episodic",
+  semantic: "Semantic",
+  procedural: "Procedural",
+};
 
 export function MemoryInspector({
   tenant,
@@ -69,25 +82,32 @@ export function MemoryInspector({
 
   return (
     <div className="card flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <div className="text-sm font-semibold">{label} memory</div>
-        <div className="flex gap-1">
-          {(["episodic", "semantic", "procedural"] as Tab[]).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={cn(
-                "btn text-xs",
-                tab === t && "border-accent text-accent",
-              )}
-            >
-              {t}
-              <span className="ml-1 opacity-60">
-                {data ? data[t].length : 0}
-              </span>
-            </button>
-          ))}
-        </div>
+      <div className="mb-2">
+        <div className="text-sm font-semibold leading-tight">{label}</div>
+        <div className="text-[10px] text-subtle">Three-tier shared context store</div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-1 mb-2">
+        {(["episodic", "semantic", "procedural"] as Tab[]).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={cn(
+              "btn text-[11px] px-2 py-1 inline-flex items-center justify-center gap-1 min-w-0",
+              tab === t && "border-accent text-accent",
+            )}
+            title={TIER_DESCRIPTIONS[t]}
+          >
+            <span className="truncate">{TIER_LABELS[t]}</span>
+            <span className="opacity-60 shrink-0">
+              {data ? data[t].length : 0}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="text-[11px] text-muted mb-2 leading-snug border-l-2 border-accent/40 pl-2">
+        {TIER_DESCRIPTIONS[tab]}
       </div>
 
       <div className="overflow-y-auto max-h-72 text-xs space-y-1.5">
@@ -113,9 +133,14 @@ function EpisodicList({
   rows: MemoryAll["episodic"];
   flash: Record<string, boolean>;
 }) {
-  if (rows.length === 0) return <div className="text-muted py-2">empty</div>;
+  if (rows.length === 0)
+    return (
+      <div className="text-muted py-3 text-center italic">
+        No episodic memory yet. Send a message to see it appear here.
+      </div>
+    );
   return (
-    <ul>
+    <ul className="space-y-1.5">
       {rows.map((r) => (
         <li
           key={r.id}
@@ -124,7 +149,7 @@ function EpisodicList({
             flash[`episodic:${r.id}`] && "row-flash",
           )}
         >
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2 mb-1">
             <span
               className={cn(
                 "pill text-[10px]",
@@ -139,7 +164,9 @@ function EpisodicList({
               {new Date(r.created_at).toLocaleTimeString()}
             </span>
           </div>
-          <div className="text-zinc-200">{r.content}</div>
+          <div className="text-zinc-200 text-[12px] leading-snug">
+            <Markdown content={r.content} />
+          </div>
         </li>
       ))}
     </ul>
@@ -153,9 +180,14 @@ function SemanticList({
   rows: MemoryAll["semantic"];
   flash: Record<string, boolean>;
 }) {
-  if (rows.length === 0) return <div className="text-muted py-2">empty</div>;
+  if (rows.length === 0)
+    return (
+      <div className="text-muted py-3 text-center italic">
+        No semantic facts distilled yet.
+      </div>
+    );
   return (
-    <ul>
+    <ul className="space-y-1.5">
       {rows.map((r) => (
         <li
           key={r.id}
@@ -164,10 +196,16 @@ function SemanticList({
             flash[`semantic:${r.id}`] && "row-flash",
           )}
         >
-          <div className="text-zinc-200">{r.fact}</div>
-          <div className="mt-0.5 flex gap-2 text-[10px] text-muted">
-            <span>conf {r.confidence.toFixed(2)}</span>
-            <span>×{r.corroboration_count}</span>
+          <div className="text-zinc-200 text-[12px] leading-snug">
+            <Markdown content={r.fact} />
+          </div>
+          <div className="mt-1 flex gap-2 text-[10px] text-muted">
+            <span title="Confidence (0–1) — increases on corroboration">
+              conf {r.confidence.toFixed(2)}
+            </span>
+            <span title="Number of times this fact has been corroborated by similar embeddings">
+              ×{r.corroboration_count}
+            </span>
           </div>
         </li>
       ))}
@@ -182,7 +220,12 @@ function ProceduralList({
   rows: MemoryAll["procedural"];
   flash: Record<string, boolean>;
 }) {
-  if (rows.length === 0) return <div className="text-muted py-2">empty</div>;
+  if (rows.length === 0)
+    return (
+      <div className="text-muted py-3 text-center italic">
+        No procedural patterns for this tenant yet.
+      </div>
+    );
   return (
     <ul className="space-y-2">
       {rows.map((r) => (
@@ -194,14 +237,16 @@ function ProceduralList({
             r.last_used_at && "glow-procedural",
           )}
         >
-          <div className="text-accent font-medium">{r.problem_signature}</div>
+          <div className="text-accent font-medium text-[12px]">
+            {r.problem_signature}
+          </div>
           <div className="text-[10px] text-muted">
             success_count={r.success_count}
             {r.last_used_at && (
               <> · last_used={new Date(r.last_used_at).toLocaleString()}</>
             )}
           </div>
-          <ol className="mt-1 list-decimal list-inside space-y-0.5 text-zinc-300">
+          <ol className="mt-1 list-decimal list-inside space-y-0.5 text-zinc-300 text-[12px]">
             {r.steps?.map((s, i) => (
               <li key={i}>
                 {s.action}

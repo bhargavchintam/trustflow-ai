@@ -126,14 +126,11 @@ function AdminPanel({
       <summary className="cursor-pointer flex items-center gap-2 text-sm font-medium select-none">
         <Settings2 className="w-4 h-4 text-accent shrink-0" />
         <span>Admin tools</span>
-        <span className="ml-auto text-xs text-muted font-normal hidden sm:inline">
-          visible because role=admin
-        </span>
       </summary>
       <div className="mt-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <button onClick={reseed} disabled={working !== null} className="btn">
-            {working === "reseed" ? "Reseeding…" : "Reseed sample workspaces"}
+            {working === "reseed" ? "Reseeding…" : "Reseed workspace data"}
           </button>
           <button onClick={wipeMine} disabled={working !== null} className="btn">
             {working === "wipe" ? "Wiping…" : "Wipe my memory"}

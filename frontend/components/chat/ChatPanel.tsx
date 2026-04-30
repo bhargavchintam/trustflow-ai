@@ -178,7 +178,7 @@ export function ChatPanel({
 
       {attackPrompts && attackPrompts.length > 0 && (
         <div className="mt-3 pt-3 border-t border-border">
-          <div className="text-xs text-muted mb-1.5">Attack the agent:</div>
+          <div className="text-xs text-muted mb-1.5">Red-team prompts:</div>
           <div className="flex flex-wrap gap-1.5">
             {attackPrompts.map((a) => (
               <button

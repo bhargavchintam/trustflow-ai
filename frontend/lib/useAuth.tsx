@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
+import { backendSignUp } from "./api";
 import { SUPABASE_CONFIGURED, supabase } from "./supabase";
 import type { Identity } from "./types";
 
@@ -17,6 +18,14 @@ interface AuthState {
 
 const AuthCtx = createContext<AuthState | null>(null);
 
+const ADMIN_EMAILS = new Set([
+  "drew@acme.com",
+  "drew@acme.demo",
+  "admin@acme.com",
+  "admin@acme.demo",
+]);
+const ADMIN_USER_IDS = new Set(["admin", "drew"]);
+
 function deriveIdentityFromEmail(email: string): Identity {
   const [localRaw, domainRaw] = email.split("@");
   const local = (localRaw ?? "user").toLowerCase().replace(/[^a-z0-9_-]+/g, "") || "user";
@@ -28,7 +37,9 @@ function deriveIdentityFromEmail(email: string): Identity {
     "globex.demo": "tenant_globex",
   };
   const tenant_id = SPECIAL[domain] ?? `tenant_${domain.replace(/[^a-z0-9]+/g, "_")}`;
-  const role: Identity["role"] = local === "admin" ? "admin" : "employee";
+  const isAdmin =
+    ADMIN_EMAILS.has(email.toLowerCase().trim()) || ADMIN_USER_IDS.has(local);
+  const role: Identity["role"] = isAdmin ? "admin" : "employee";
   return {
     tenant_id,
     user_id: local,
@@ -75,9 +86,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
+    // Route through the backend (admin.create_user with email_confirm:true) so
+    // Supabase's email-rate-limit on the public signUp endpoint never triggers.
+    // The backend returns a real access/refresh token pair; we hydrate the
+    // Supabase client session from it so subsequent requests carry the JWT.
+    const resp = await backendSignUp(email, password);
     const sb = supabase();
-    const { error } = await sb.auth.signUp({ email, password });
-    if (error) throw error;
+    if (resp.refresh_token) {
+      const { error } = await sb.auth.setSession({
+        access_token: resp.access_token,
+        refresh_token: resp.refresh_token,
+      });
+      if (error) throw error;
+    } else {
+      // Fall back to a fresh sign-in if the backend didn't return a refresh token.
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+    }
   };
 
   const signOut = async () => {

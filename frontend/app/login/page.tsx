@@ -7,8 +7,8 @@ import { useAuth } from "@/lib/useAuth";
 import { SUPABASE_CONFIGURED } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
-const DEMO_PASSWORD = "DemoPass123!";
-const SAMPLE_WORKSPACES = [
+const QUICK_ACCESS_PASSWORD = "DemoPass123!";
+const TEAM_MEMBERS = [
   {
     email: "sam@acme.com",
     label: "Sam Patel",
@@ -77,7 +77,7 @@ export default function LoginPage() {
     setError(null);
     setBusy(email);
     try {
-      await signIn(email, DEMO_PASSWORD);
+      await signIn(email, QUICK_ACCESS_PASSWORD);
     } catch (err: any) {
       setError(`${email}: ${err?.message ?? "auth failed"}`);
     } finally {
@@ -171,15 +171,15 @@ export default function LoginPage() {
           <div className="flex items-center gap-2 text-accent">
             <Sparkles className="w-4 h-4" />
             <span className="text-xs uppercase tracking-wider font-semibold">
-              Sample workspaces
+              Continue as a teammate
             </span>
           </div>
           <p className="text-muted text-xs leading-relaxed">
-            Continue as one of the sample teammates below. Each workspace is fully
-            isolated — open another browser to compare side by side.
+            Sign in as one of the teammates below. Each workspace is isolated by
+            tenant — open a second browser to see two tenants live, side by side.
           </p>
           <ul className="space-y-2">
-            {SAMPLE_WORKSPACES.map((a) => (
+            {TEAM_MEMBERS.map((a) => (
               <li key={a.email}>
                 <button
                   onClick={() => quickSignIn(a.email)}

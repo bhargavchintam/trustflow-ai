@@ -3,6 +3,11 @@ import { cn } from "@/lib/utils";
 import { RouteBadge } from "./RouteBadge";
 import { LatencyPill } from "./LatencyPill";
 import { TracePanel } from "./TracePanel";
+import { Markdown } from "./Markdown";
+import { WorkflowDiagram } from "./WorkflowDiagram";
+import { MemoryWriteSummary } from "./MemoryWriteSummary";
+import { RouteExplainer } from "./RouteExplainer";
+import { LiveWorkflowStepper } from "./LiveWorkflowStepper";
 
 export function MessageBubble({
   msg,
@@ -34,27 +39,52 @@ export function MessageBubble({
               promptTokens={msg.promptTokens}
               completionTokens={msg.completionTokens}
               costUsd={msg.costUsd}
+              route={msg.route?.route}
             />
-            {msg.streaming && msg.phase && (
-              <span className="pill border-accent/40 text-accent bg-accent/10 animate-pulse">
-                {msg.phase}…
-              </span>
+          </div>
+        )}
+        {!isUser && msg.streaming && msg.route && (
+          <LiveWorkflowStepper
+            route={msg.route}
+            phase={msg.phase}
+            phaseHistory={msg.phaseHistory}
+          />
+        )}
+        {!isUser && !msg.streaming && msg.route && (
+          <RouteExplainer route={msg.route} />
+        )}
+        {isUser ? (
+          <div className="whitespace-pre-wrap leading-relaxed">{msg.content}</div>
+        ) : (
+          <div className="relative">
+            <Markdown content={msg.content} />
+            {msg.streaming && msg.content && (
+              <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-accent/70 align-middle animate-pulse" />
             )}
           </div>
         )}
-        <div className="whitespace-pre-wrap leading-relaxed">
-          {msg.content}
-          {msg.streaming && msg.content && (
-            <span className="inline-block w-1.5 h-3.5 ml-0.5 bg-accent/70 align-middle animate-pulse" />
-          )}
-        </div>
         {!isUser && !msg.streaming && msg.messageId && (
-          <TracePanel
-            tenant={tenant}
-            user={user}
-            sessionId={sessionId}
-            messageId={msg.messageId}
-          />
+          <>
+            <WorkflowDiagram
+              route={msg.route}
+              tenant={tenant}
+              user={user}
+              sessionId={sessionId}
+              messageId={msg.messageId}
+            />
+            <MemoryWriteSummary
+              tenant={tenant}
+              user={user}
+              sessionId={sessionId}
+              messageId={msg.messageId}
+            />
+            <TracePanel
+              tenant={tenant}
+              user={user}
+              sessionId={sessionId}
+              messageId={msg.messageId}
+            />
+          </>
         )}
       </div>
     </div>

@@ -39,6 +39,17 @@ POLICY_RULES: dict[str, PolicyRule] = {
         "requires_hitl_for": [],
         "description": "File a support ticket. Always self-targeted; never escalates.",
     },
+    "unlock_account": {
+        "max_target_user": "self",
+        "requires_hitl_for": [],
+        "description": "Unlock the requester's locked account. Self-only.",
+    },
+    "reset_mfa": {
+        "max_target_user": "self",
+        "requires_hitl_for": ["executive", "admin"],
+        "description": "Reset the requester's MFA enrolment. Self-only; admin/executive "
+                       "requires approval.",
+    },
 }
 
 

@@ -40,6 +40,7 @@ export interface ChatMessage {
   costUsd?: number;
   streaming?: boolean;
   phase?: string;
+  phaseHistory?: string[];
 }
 
 export interface HealthStatus {
@@ -92,6 +93,18 @@ export interface MemoryAll {
   episodic: EpisodicRow[];
   semantic: SemanticRow[];
   procedural: ProceduralRow[];
+}
+
+export interface HistoryMessage {
+  id: string;
+  role: Role;
+  content: string;
+  session_id: string;
+  created_at: string;
+}
+
+export interface HistoryResponse {
+  messages: HistoryMessage[];
 }
 
 export interface EvalSummary {

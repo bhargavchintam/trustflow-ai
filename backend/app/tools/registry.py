@@ -15,7 +15,9 @@ from typing import Any, Awaitable, Callable
 from app.models import Identity
 from app.tools.check_vpn_status import check_vpn_status
 from app.tools.file_ticket import file_ticket
+from app.tools.reset_mfa import reset_mfa
 from app.tools.reset_password import reset_password
+from app.tools.unlock_account import unlock_account
 from app.tools.vpn_diagnostic import vpn_diagnostic
 
 ToolImpl = Callable[[dict[str, Any], Identity], Awaitable[dict[str, Any]]]
@@ -25,6 +27,8 @@ TOOL_REGISTRY: dict[str, ToolImpl] = {
     "check_vpn_status": check_vpn_status,
     "reset_password": reset_password,
     "file_ticket": file_ticket,
+    "unlock_account": unlock_account,
+    "reset_mfa": reset_mfa,
 }
 
 
@@ -49,5 +53,13 @@ def tool_descriptions() -> dict[str, str]:
             "File a support ticket on behalf of the requester. Args: category (e.g. "
             "'software_request', 'hardware', 'access'), summary. Always allowed for self; "
             "use this when you can't resolve a problem yourself."
+        ),
+        "unlock_account": (
+            "Unlock the requester's locked account after too many failed login attempts. "
+            "Self-only."
+        ),
+        "reset_mfa": (
+            "Reset the requester's multi-factor authentication enrolment so they can "
+            "re-enrol on a new device. Self-only."
         ),
     }

@@ -24,6 +24,15 @@ SPECIAL_DOMAINS = {
     "globex.demo": "tenant_globex",
 }
 
+ADMIN_EMAILS = {
+    "drew@acme.com",
+    "drew@acme.demo",
+    "admin@acme.com",
+    "admin@acme.demo",
+}
+
+ADMIN_USER_IDS = {"admin", "drew"}
+
 
 def sanitize_user_id(local: str) -> str:
     cleaned = re.sub(r"[^a-z0-9_-]+", "", local.lower()).strip("-_")
@@ -38,8 +47,12 @@ def tenant_id_for_domain(domain: str) -> str:
     return f"tenant_{safe}"
 
 
-def derive_role(user_id: str) -> str:
-    return "admin" if user_id == "admin" else "employee"
+def derive_role(user_id: str, email: str | None = None) -> str:
+    if email and email.lower().strip() in ADMIN_EMAILS:
+        return "admin"
+    if user_id in ADMIN_USER_IDS:
+        return "admin"
+    return "employee"
 
 
 def split_email(email: str) -> tuple[str, str]:
@@ -54,5 +67,5 @@ def derive_identity_fields(email: str) -> tuple[str, str, str]:
     local, domain = split_email(email)
     user_id = sanitize_user_id(local)
     tenant_id = tenant_id_for_domain(domain)
-    role = derive_role(user_id)
+    role = derive_role(user_id, email=email)
     return tenant_id, user_id, role
