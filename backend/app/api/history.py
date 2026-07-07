@@ -7,10 +7,12 @@ the frontend can rehydrate the chat thread on page load.
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query
 
 from app.api.identity import resolve_identity
+from app.audit.logger import log_event
 from app.memory import service as memory
 from app.models import Identity
 
@@ -28,6 +30,19 @@ async def get_history(
         user_id=identity.user_id,
         limit=limit,
         session_id=session_id,
+    )
+    await log_event(
+        correlation_id=uuid4(),
+        identity=identity,
+        message_id=uuid4(),
+        event_type="memory_read",
+        payload={
+            "source": "history_rehydration",
+            "tier": "episodic",
+            "hit_count": len(rows),
+            "session_filter": session_id,
+            "rows_by_tenant": {identity.tenant_id: len(rows)},
+        },
     )
     rows = list(reversed(rows))
     messages = [

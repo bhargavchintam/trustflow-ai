@@ -63,6 +63,18 @@ async def chat(req: ChatRequest, identity: Identity = Depends(resolve_identity))
         cached_payload = cached[1]
 
         async def replay_stream():
+            await log_event(
+                correlation_id=correlation_id,
+                identity=identity,
+                message_id=message_id,
+                event_type="route",
+                payload={
+                    "idempotent_replay": True,
+                    "original_message_id": cached_payload["message"]["message_id"],
+                    "route": cached_payload["route"].get("route"),
+                    "intent": cached_payload["route"].get("intent"),
+                },
+            )
             yield {
                 "event": "route",
                 "data": json.dumps(

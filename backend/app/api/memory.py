@@ -1,4 +1,9 @@
-"""GET /api/memory?tier=... — read memory inspector data for the current identity."""
+"""GET /api/memory?tier=... — read memory inspector data for the current identity.
+
+Deliberately not audit-logged: the inspector polls every 2.5s, so logging here
+would flood tool_audit with telemetry. Agent-path reads (graph/agent.py) and
+history rehydration (api/history.py) are the audited data accesses.
+"""
 from __future__ import annotations
 
 from typing import Literal
