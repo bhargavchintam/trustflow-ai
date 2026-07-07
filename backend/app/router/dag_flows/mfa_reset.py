@@ -44,16 +44,17 @@ async def run(
 
     if tool_result.hitl:
         response = (
-            "MFA reset for an admin/executive account requires HITL approval. "
-            "I've filed ticket **#TKT-PENDING** for the IT team — they'll respond "
-            "within 4 business hours."
+            "MFA reset for an admin/executive account requires approval. "
+            "Your request has been logged for the IT team to review — they'll "
+            "respond within 4 business hours."
         )
     elif tool_result.blocked:
         response = (
-            f"I can't reset MFA — {tool_result.reason}. Filing a ticket for IT."
+            f"I can't reset MFA — {tool_result.reason}. This attempt has been "
+            f"logged; please contact IT if you believe this is an error."
         )
     elif tool_result.error:
-        response = "Hit a snag resetting MFA. I've escalated to the IT team."
+        response = "Hit a snag resetting MFA. Please raise a ticket with IT."
     else:
         data = tool_result.data or {}
         ticket = data.get("ticket_id", "TKT-UNKNOWN")

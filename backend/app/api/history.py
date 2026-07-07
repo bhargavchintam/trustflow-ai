@@ -27,9 +27,8 @@ async def get_history(
         tenant_id=identity.tenant_id,
         user_id=identity.user_id,
         limit=limit,
+        session_id=session_id,
     )
-    if session_id:
-        rows = [r for r in rows if str(r.get("session_id") or "") == session_id]
     rows = list(reversed(rows))
     messages = [
         {

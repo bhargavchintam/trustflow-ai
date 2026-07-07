@@ -41,18 +41,19 @@ async def run(
 
     if tool_result.hitl:
         response = (
-            f"This action requires admin approval. I've filed ticket #TKT-PENDING for "
-            f"the IT team. They'll respond within 4 business hours. In the meantime, "
-            f"I can help with anything else?"
+            f"Password reset for your role requires admin approval. Your request "
+            f"has been logged for the IT team to review — they'll respond within "
+            f"4 business hours. In the meantime, I can help with anything else?"
         )
     elif tool_result.blocked:
         response = (
             f"I can't reset that password — {tool_result.reason}. "
-            f"Filing a ticket for the IT admin to handle it."
+            f"This attempt has been logged; please contact IT if you believe "
+            f"this is an error."
         )
     elif tool_result.error:
         response = (
-            "Something went wrong with the password reset. I've filed a ticket for the IT team."
+            "Something went wrong with the password reset. Please raise a ticket with IT."
         )
     else:
         data = tool_result.data or {}

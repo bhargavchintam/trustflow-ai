@@ -41,8 +41,9 @@ POLICY_RULES: dict[str, PolicyRule] = {
     },
     "unlock_account": {
         "max_target_user": "self",
-        "requires_hitl_for": [],
-        "description": "Unlock the requester's locked account. Self-only.",
+        "requires_hitl_for": ["executive", "admin"],
+        "description": "Unlock the requester's locked account. Self-only; admin/executive "
+                       "requires approval.",
     },
     "reset_mfa": {
         "max_target_user": "self",

@@ -58,6 +58,7 @@ async def read_episodic(
     user_id: str,
     query: str | None = None,
     limit: int = 10,
+    session_id: str | None = None,
 ) -> list[dict[str, Any]]:
     if query:
         embedding = await embed_one(query)
@@ -84,23 +85,37 @@ async def read_episodic(
 
     async with connection() as conn:
         async with conn.cursor(row_factory=dict_row) as cur:
-            await cur.execute(
-                """
-                SELECT id, role, content, created_at, session_id
-                FROM episodic_memory
-                WHERE tenant_id = %s AND user_id = %s
-                ORDER BY created_at DESC
-                LIMIT %s
-                """,
-                (tenant_id, user_id, limit),
-            )
+            if session_id is not None:
+                await cur.execute(
+                    """
+                    SELECT id, role, content, created_at, session_id
+                    FROM episodic_memory
+                    WHERE tenant_id = %s AND user_id = %s AND session_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                    """,
+                    (tenant_id, user_id, session_id, limit),
+                )
+            else:
+                await cur.execute(
+                    """
+                    SELECT id, role, content, created_at, session_id
+                    FROM episodic_memory
+                    WHERE tenant_id = %s AND user_id = %s
+                    ORDER BY created_at DESC
+                    LIMIT %s
+                    """,
+                    (tenant_id, user_id, limit),
+                )
             return list(await cur.fetchall())
 
 
 async def list_episodic(
-    *, tenant_id: str, user_id: str, limit: int = 50
+    *, tenant_id: str, user_id: str, limit: int = 50, session_id: str | None = None
 ) -> list[dict[str, Any]]:
-    return await read_episodic(tenant_id=tenant_id, user_id=user_id, query=None, limit=limit)
+    return await read_episodic(
+        tenant_id=tenant_id, user_id=user_id, query=None, limit=limit, session_id=session_id
+    )
 
 
 # ---------- Semantic ----------

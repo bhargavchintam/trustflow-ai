@@ -42,13 +42,20 @@ async def run(
         message_id=message_id,
     )
 
-    if tool_result.blocked:
+    if tool_result.hitl:
+        response = (
+            "Account unlock for an admin/executive account requires approval. "
+            "Your request has been logged for the IT team to review — they'll "
+            "respond within 4 business hours."
+        )
+    elif tool_result.blocked:
         response = (
             f"I can't unlock that account — {tool_result.reason}. "
-            f"Filing a ticket for the IT admin."
+            f"This attempt has been logged; please contact IT if you believe "
+            f"this is an error."
         )
     elif tool_result.error:
-        response = "Hit a snag unlocking the account. I've escalated to IT."
+        response = "Hit a snag unlocking the account. Please raise a ticket with IT."
     else:
         data = tool_result.data or {}
         ticket = data.get("ticket_id", "TKT-UNKNOWN")
