@@ -77,7 +77,7 @@ export default function EvalPage() {
             critical={false}
           />
           <Stat
-            label="Prompt-injection block rate"
+            label="Policy decisions (block/allow)"
             n={data.summary.security?.passed}
             d={data.summary.security?.total}
             rate={data.summary.security?.rate}

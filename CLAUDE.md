@@ -28,7 +28,7 @@
 - `backend/app/graph/agent.py` — LangGraph state machine (triage → retrieve → diagnose → resolve → memwrite)
 - `backend/app/router/coordinator.py` — Stage A keyword router
 - `backend/app/db/schema.sql` — source of truth for tables
-- `backend/app/evals/synthetic_eval.json` — 20-30 cases driving the eval dashboard
+- `backend/app/evals/synthetic_eval.json` — 40 cases driving the eval dashboard
 - `backend/app/evals/run_evals.py` + `evals/judge.py` — execution + per-category pass/fail
 - `frontend/app/page.tsx` — split-panel demo (Alice | Bob)
 - `frontend/components/chat/TracePanel.tsx` — per-message timeline

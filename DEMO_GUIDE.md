@@ -221,7 +221,7 @@ Click the **Evals** link in the top header (next to the TrustFlow AI logo). This
 You will see a dashboard with:
 
 - **Routing accuracy** — DAG-vs-ReAct correctness across 13 cases.
-- **Prompt-injection block rate** — adversarial inputs that should never execute, across 9 cases.
+- **Policy decisions (block/allow)** — adversarial inputs that should never execute, plus legitimate self-service requests that should always be allowed (false-positive checks), across 14 cases.
 - **Cross-tenant isolation** — 6 cases, must always be 100%.
 - **Memory recall/precision** — 7 cases, returning users should hit memory; new users should not false-positive.
 - **Latency** — p50 / p95 in milliseconds.
@@ -229,11 +229,11 @@ You will see a dashboard with:
 
 Below the cards is a per-case table showing PASS/FAIL with the actual trace summary. Click any row to inspect.
 
-![Eval dashboard — 13/13 routing, 12/12 security, 6/6 tenant_isolation, 7/7 memory, all 100%](docs/screenshots/13-eval-dashboard.png)
+![Eval dashboard — 13/13 routing, 14/14 policy decisions, 6/6 tenant_isolation, 7/7 memory, all 100%](docs/screenshots/13-eval-dashboard.png)
 
 ![Per-case table showing every case with PASS/FAIL plus the actual trace summary](docs/screenshots/14-eval-case-detail.png)
 
-The eval suite is **38 cases total** — please do not confuse with smaller numbers in older docs. Every category is at 100% on the deployed URL. The judge logic is in `backend/app/evals/judge.py` — it inspects the actual trace events from the live API, not mocked data.
+The eval suite is **40 cases total** — please do not confuse with smaller numbers in older docs. Every category is at 100% on the deployed URL. The judge logic is in `backend/app/evals/judge.py` — it inspects the actual trace events from the live API, not mocked data.
 
 ### Step 9 — Refresh the browser to prove persistence
 
@@ -317,7 +317,7 @@ Please cover all of these points in the recording:
 2. **Five DAG flows, not just one.** `password_reset`, `account_unlock`, `mfa_reset`, `request_software`, `distribution_list_access`. Each one is a deterministic single-tool flow with policy-gated execution.
 3. **Per-message workflow visualisation.** Three stacked pieces: live stepper during streaming, post-stream workflow diagram from the audit trace, route-explainer subline. The screen narrates the controller's decision on every turn.
 4. **Persistent chat history.** Refresh the browser, sign back in — your messages reload from episodic memory.
-5. **Live eval dashboard.** 38 cases, four categories, all at 100% on the deployed URL. p50/p95 latency and cost per request shown next to the pass rates.
+5. **Live eval dashboard.** 40 cases, four categories, all at 100% on the deployed URL. p50/p95 latency and cost per request shown next to the pass rates.
 6. **Tool Gateway is the only execution path.** The LLM cannot bypass it. The audit log captures every event with a correlation ID for replay.
 7. **Tenant-aware end-to-end.** The schema enforces `tenant_id`, the eval suite proves it, and the production roadmap upgrades from pgvector + SQL filter to Qdrant Cloud collections-per-tenant.
 8. **Real product feel.** Supabase Auth, single-chat UX, multi-tenancy demonstrated by opening two browsers, no demo language anywhere on the page.
@@ -339,7 +339,7 @@ A. Three things, in order. (1) The system prompt explicitly tells the model to i
 A. Tenant tiers: pool default (shared infra, hard SQL filter), bridge for enterprise (dedicated KMS, dedicated Qdrant collection), silo for regulated (separate VPC + Postgres + Qdrant). The schema is already tenant-aware so the migration is a config change, not a rewrite. Effort estimate: 5 days for tier 1, 3 weeks for full pool/bridge/silo.
 
 **Q. How big is the eval suite and what does it cover?**
-A. 38 cases across four categories — routing (13), security (12), memory (7), tenant_isolation (6). Edge cases include case-insensitivity, XML tag injection, social engineering, role spoofing, cross-user unlock and MFA denial, executive HITL approval, in-prompt tenant override, and fake header injection. All currently at 100% on the deployed URL.
+A. 40 cases across four categories — routing (13), policy decisions (14), memory (7), tenant_isolation (6). Edge cases include case-insensitivity, XML tag injection, social engineering, role spoofing, cross-user unlock and MFA denial, executive HITL approval, in-prompt tenant override, fake header injection, and two false-positive checks proving legitimate self-service is never blocked. All currently at 100% on the deployed URL.
 
 ---
 
@@ -347,7 +347,7 @@ A. 38 cases across four categories — routing (13), security (12), memory (7), 
 
 - [ ] Three Chrome windows open and signed in (Maya, Priya, Drew). Sam optional — used only if you want to show the new-user contrast.
 - [ ] App Runner unpaused. `/healthz` returns `{"status":"ok"}`.
-- [ ] `/eval` shows current 38/38 result. If stale, run `python -m app.evals.run_evals --api $LIVE_URL` from your laptop first.
+- [ ] `/eval` shows current 40/40 result. If stale, run `python -m app.evals.run_evals --api $LIVE_URL` from your laptop first.
 - [ ] Microphone level checked. No background music.
 - [ ] Browser zoom at 100%. Window size around 1440 × 900 so everything fits.
 - [ ] No notifications, Slack pop-ups, or calendar alerts.
