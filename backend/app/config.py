@@ -26,6 +26,9 @@ class Settings(BaseSettings):
 
     default_tenant_id: str = Field("tenant_acme", alias="DEFAULT_TENANT_ID")
     default_user_id: str = Field("sam", alias="DEFAULT_USER_ID")
+    # Secure by default: requests with no JWT, headers, or query identity get 401.
+    # Set ALLOW_ANONYMOUS_IDENTITY=true only for local curl-driven debugging.
+    allow_anonymous_identity: bool = Field(False, alias="ALLOW_ANONYMOUS_IDENTITY")
 
     log_level: str = Field("INFO", alias="LOG_LEVEL")
 

@@ -68,7 +68,7 @@ async def run(
             f"Please email IT directly."
         )
     elif tool_result.error:
-        response = "Hit a snag filing the ticket. I've escalated to the IT team."
+        response = "Hit a snag filing the ticket. Please email IT directly."
     else:
         ticket = (tool_result.data or {}).get("ticket_id", "TKT-PENDING")
         response = (

@@ -5,6 +5,9 @@
 2. X-Tenant-Id / X-User-Id headers — automation path (smoke tests, eval suite,
    internal admin tooling). Documented in README as the dev-only fallback.
 
+Requests with neither get 401 unless ALLOW_ANONYMOUS_IDENTITY=true, which maps
+them to the default demo identity — local curl-debugging convenience only.
+
 This is the only place identity is established. Everywhere else
 (`request.state.identity` or `Depends(resolve_identity)`) just reads the result.
 """
@@ -16,7 +19,7 @@ from fastapi import Cookie, Header, Query
 from psycopg.rows import dict_row
 
 from app.auth.identity_mapping import derive_identity_fields, derive_role
-from app.auth.jwt_validator import TokenError, decode_token
+from app.auth.jwt_validator import TokenError, decode_token, http_unauthorized
 from app.config import get_settings
 from app.db.connection import connection
 from app.models import Identity
@@ -117,6 +120,8 @@ async def resolve_identity(
     if ident is not None:
         return ident
     s = get_settings()
+    if not s.allow_anonymous_identity:
+        raise http_unauthorized("no identity: supply a bearer token or X-Tenant-Id/X-User-Id headers")
     return Identity(
         tenant_id=s.default_tenant_id,
         user_id=s.default_user_id,
