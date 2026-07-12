@@ -12,7 +12,7 @@ DAG_KEYWORDS: dict[str, str] = {
     r"\breset (my )?(?:mfa|2fa|two[\s-]factor|multi[\s-]factor|authenticator)\b": "mfa_reset",
     r"\b(?:lost|new|broken|replaced) (my )?(?:phone|device|authenticator)\b.*\b(mfa|2fa|code)\b": "mfa_reset",
     r"\b(?:add(?:\s+me)?\s+to|join(?:\s+me)?(?:\s+to)?|grant(?:\s+me)?\s+access\s+to|subscribe\s+me\s+to|membership\s+in)\s+(?:the\s+)?(?:dl|distribution\s+list|mailing\s+list|email\s+group|google\s+group)\b": "distribution_list_access",
-    r"\b(?:request|need|install|access to|provision|grant me)\s+\w": "request_software",
+    r"\b(?:request|need|install|provision|grant me)\b(?:\s+\w+){0,4}?\s+(?:access|software|license|licence|app|application|tool|vpn)\b": "request_software",
 }
 
 HANDLED_DAG_INTENTS = {
