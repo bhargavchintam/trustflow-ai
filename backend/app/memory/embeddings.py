@@ -3,7 +3,7 @@ Returns None per text on failure so the caller can persist with embedding_status
 from __future__ import annotations
 
 import logging
-from typing import Sequence
+from collections.abc import Sequence
 
 import httpx
 import voyageai

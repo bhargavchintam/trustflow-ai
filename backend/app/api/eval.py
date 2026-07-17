@@ -1,7 +1,7 @@
 """GET /api/eval — eval dashboard data. POST /api/eval/run — re-run evals server-side."""
 from __future__ import annotations
 
-import asyncio
+import logging
 
 from fastapi import APIRouter, BackgroundTasks
 from psycopg.rows import dict_row
@@ -9,6 +9,7 @@ from psycopg.rows import dict_row
 from app.db.connection import connection
 from app.evals.run_evals import run_all
 
+log = logging.getLogger(__name__)
 router = APIRouter()
 
 
@@ -79,4 +80,4 @@ async def _run_evals_in_background():
     try:
         await run_all(api_url="http://localhost:8080")
     except Exception:
-        pass
+        log.exception("background eval run failed")

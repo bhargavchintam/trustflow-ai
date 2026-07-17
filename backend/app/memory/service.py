@@ -78,7 +78,7 @@ async def read_episodic(
                                   + {HYBRID_BM25_WEIGHT} * ts_rank(content_tsv,
                                        plainto_tsquery('english', %s))) DESC
                         LIMIT %s
-                        """,
+                        """,  # noqa: S608 -- weights are module-level float constants, not user input
                         (vec_literal, query, tenant_id, user_id, vec_literal, query, limit),
                     )
                     return list(await cur.fetchall())

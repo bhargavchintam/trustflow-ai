@@ -10,7 +10,8 @@ The policy-auditor agent enforces (1)-(3); the eval coverage check enforces (4).
 """
 from __future__ import annotations
 
-from typing import Any, Awaitable, Callable
+from collections.abc import Awaitable, Callable
+from typing import Any
 
 from app.models import Identity
 from app.tools.check_vpn_status import check_vpn_status

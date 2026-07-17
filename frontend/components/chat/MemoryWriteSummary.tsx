@@ -19,7 +19,7 @@ export function MemoryWriteSummary({
   if (writes.length === 0) return null;
   const tally: Record<string, number> = {};
   for (const w of writes) {
-    const tier = (w.payload as any)?.tier ?? "unknown";
+    const tier = (w.payload?.tier as string | undefined) ?? "unknown";
     tally[tier] = (tally[tier] ?? 0) + 1;
   }
   const parts = Object.entries(tally).map(([tier, n]) => `${n} ${tier}`);

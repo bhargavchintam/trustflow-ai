@@ -12,8 +12,11 @@ import json
 import logging
 import re
 import time
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
 
 from anthropic import APIStatusError, AsyncAnthropic
 from tenacity import (
@@ -143,7 +146,7 @@ async def retrieve(state: GraphState) -> GraphState:
     state["procedural_hits"] = [_jsonable(p) for p in procedural]
 
     rows_by_tenant: dict[str, int] = {}
-    for row in episodic + semantic + procedural:
+    for _row in episodic + semantic + procedural:
         rows_by_tenant.setdefault(identity.tenant_id, 0)
         rows_by_tenant[identity.tenant_id] += 1
 

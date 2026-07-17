@@ -7,7 +7,6 @@ import asyncio
 import json
 import time
 from pathlib import Path
-from uuid import uuid4
 
 import httpx
 from psycopg.types.json import Jsonb

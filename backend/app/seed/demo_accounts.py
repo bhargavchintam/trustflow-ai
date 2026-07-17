@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Iterable
+from collections.abc import Iterable
 
 from app.auth.identity_mapping import derive_identity_fields
 from app.auth.supabase_client import SupabaseNotConfigured, admin_client
@@ -25,7 +25,7 @@ from app.db.connection import close_pool, connection, init_pool
 
 log = logging.getLogger(__name__)
 
-DEMO_PASSWORD = "DemoPass123!"
+DEMO_PASSWORD = "DemoPass123!"  # noqa: S105 -- seed data for local/demo Supabase accounts, not a real secret
 
 DEMO_ACCOUNTS: list[tuple[str, str]] = [
     ("sam@acme.com", "Sam (Acme employee, fresh account — no prior history)"),

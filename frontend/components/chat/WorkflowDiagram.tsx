@@ -172,7 +172,7 @@ function buildReactNodes(trace: TraceEvent[]): { nodes: ReactNode[]; iterations:
     nodes.push({
       label: `retrieve · ${totalHits} hits`,
       tone: totalHits > 0 ? "accent" : "muted",
-      detail: reads.map((r) => `${r.payload?.tier ?? ""}=${(r.payload as any)?.hit_count ?? ""}`).join(" "),
+      detail: reads.map((r) => `${r.payload?.tier ?? ""}=${r.payload?.hit_count ?? ""}`).join(" "),
     });
   } else {
     nodes.push({ label: "retrieve", tone: "muted" });

@@ -77,13 +77,17 @@ function decisionColor(d?: string | null): string {
   return "text-zinc-300";
 }
 
+function asText(v: unknown): string {
+  return v === null || v === undefined ? "" : String(v);
+}
+
 function PayloadSummary({ e }: { e: TraceEvent }) {
   const p = e.payload || {};
   if (e.event_type === "route") {
     return (
       <span className="opacity-80">
         {" "}
-        · route={p.route} {p.intent ? `intent=${p.intent}` : ""}
+        · route={asText(p.route)} {p.intent ? `intent=${asText(p.intent)}` : ""}
       </span>
     );
   }
@@ -91,23 +95,24 @@ function PayloadSummary({ e }: { e: TraceEvent }) {
     return (
       <span className="opacity-80">
         {" "}
-        · ep={p.tier_episodic_hits} sem={p.tier_semantic_hits} proc={p.tier_procedural_hits}
+        · ep={asText(p.tier_episodic_hits)} sem={asText(p.tier_semantic_hits)} proc={asText(p.tier_procedural_hits)}
       </span>
     );
   }
   if (e.event_type === "tool_call" || e.event_type === "policy") {
-    return <span className="opacity-80"> · tool={p.tool}</span>;
+    return <span className="opacity-80"> · tool={asText(p.tool)}</span>;
   }
   if (e.event_type === "llm_call") {
+    const costUsd = p.cost_usd as number | undefined;
     return (
       <span className="opacity-80">
         {" "}
-        · in={p.input_tokens} out={p.output_tokens} {p.cost_usd ? `$${p.cost_usd.toFixed(5)}` : ""}
+        · in={asText(p.input_tokens)} out={asText(p.output_tokens)} {costUsd ? `$${costUsd.toFixed(5)}` : ""}
       </span>
     );
   }
   if (e.event_type === "memory_write") {
-    return <span className="opacity-80"> · tier={p.tier}</span>;
+    return <span className="opacity-80"> · tier={asText(p.tier)}</span>;
   }
   return null;
 }
