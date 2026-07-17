@@ -66,8 +66,8 @@ export default function LoginPage() {
     try {
       if (mode === "sign-in") await signIn(email, password);
       else await signUp(email, password);
-    } catch (err: any) {
-      setError(err?.message ?? "auth failed");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "auth failed");
     } finally {
       setBusy(null);
     }
@@ -78,8 +78,8 @@ export default function LoginPage() {
     setBusy(email);
     try {
       await signIn(email, QUICK_ACCESS_PASSWORD);
-    } catch (err: any) {
-      setError(`${email}: ${err?.message ?? "auth failed"}`);
+    } catch (err) {
+      setError(`${email}: ${err instanceof Error ? err.message : "auth failed"}`);
     } finally {
       setBusy(null);
     }

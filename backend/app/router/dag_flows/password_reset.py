@@ -41,9 +41,9 @@ async def run(
 
     if tool_result.hitl:
         response = (
-            f"Password reset for your role requires admin approval. Your request "
-            f"has been logged for the IT team to review — they'll respond within "
-            f"4 business hours. In the meantime, I can help with anything else?"
+            "Password reset for your role requires admin approval. Your request "
+            "has been logged for the IT team to review — they'll respond within "
+            "4 business hours. In the meantime, I can help with anything else?"
         )
     elif tool_result.blocked:
         response = (

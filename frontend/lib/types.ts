@@ -58,7 +58,7 @@ export interface TraceEvent {
   session_id: string;
   message_id: string;
   event_type: EventType;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   decision?: "allow" | "deny" | "hitl" | null;
   reason?: string | null;
   latency_ms?: number | null;
@@ -123,8 +123,8 @@ export interface EvalCase {
   category: string;
   case_id: string;
   input: string;
-  expected: any;
-  actual: any;
+  expected: unknown;
+  actual: unknown;
   passed: boolean;
   latency_ms?: number;
   cost_usd?: number;

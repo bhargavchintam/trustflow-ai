@@ -66,7 +66,7 @@ async def sign_up(req: SignUpRequest):
         admin = admin_client()
         anon = anon_client()
     except SupabaseNotConfigured as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
     try:
         admin.auth.admin.create_user(
@@ -83,15 +83,15 @@ async def sign_up(req: SignUpRequest):
             raise HTTPException(
                 status_code=409,
                 detail="An account with this email already exists. Try Sign in instead.",
-            )
-        raise HTTPException(status_code=400, detail=f"sign-up failed: {e}")
+            ) from e
+        raise HTTPException(status_code=400, detail=f"sign-up failed: {e}") from e
 
     try:
         result = anon.auth.sign_in_with_password(
             {"email": req.email, "password": req.password}
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"post-signup sign-in failed: {e}")
+        raise HTTPException(status_code=500, detail=f"post-signup sign-in failed: {e}") from e
     if not result.session:
         raise HTTPException(status_code=500, detail="post-signup sign-in returned no session")
 
@@ -114,13 +114,13 @@ async def sign_in(req: SignInRequest):
     try:
         client = anon_client()
     except SupabaseNotConfigured as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     try:
         result = client.auth.sign_in_with_password(
             {"email": req.email, "password": req.password}
         )
     except Exception as e:
-        raise HTTPException(status_code=401, detail=f"sign-in failed: {e}")
+        raise HTTPException(status_code=401, detail=f"sign-in failed: {e}") from e
     if not result.session:
         raise HTTPException(status_code=401, detail="invalid credentials")
 
@@ -143,7 +143,7 @@ async def sign_out():
     try:
         client = anon_client()
         client.auth.sign_out()
-    except Exception:
+    except Exception:  # noqa: S110 -- best-effort sign-out; client already discards local session either way
         pass
     return {"status": "ok"}
 

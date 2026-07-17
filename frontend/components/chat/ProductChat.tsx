@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Send, Sparkles } from "lucide-react";
 import { fetchHistory, streamChat } from "@/lib/api";
 import type { ChatMessage, Identity, Role } from "@/lib/types";
-import { cn, getOrCreateSessionId, resetSessionId } from "@/lib/utils";
+import { getOrCreateSessionId, resetSessionId } from "@/lib/utils";
 import { MessageBubble } from "./MessageBubble";
 
 const SAMPLE_PROMPTS: { label: string; prompt: string }[] = [
@@ -131,13 +131,14 @@ export function ProductChat({
         },
       });
       onAfterSend?.();
-    } catch (e: any) {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "request failed";
       setMessages((m) =>
         m.map((msg) =>
           msg.id === asstId
             ? {
                 ...msg,
-                content: `[error] ${e?.message ?? "request failed"}`,
+                content: `[error] ${message}`,
                 streaming: false,
                 phase: undefined,
               }

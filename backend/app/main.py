@@ -11,7 +11,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pythonjsonlogger import jsonlogger
 
-from app.api import admin, auth, chat, eval as eval_api, healthz, history, memory as memory_api, trace
+from app.api import admin, auth, chat, healthz, history, trace
+from app.api import eval as eval_api
+from app.api import memory as memory_api
 from app.config import get_settings
 from app.db.bootstrap import bootstrap
 from app.db.connection import close_pool

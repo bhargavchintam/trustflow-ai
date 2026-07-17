@@ -96,7 +96,7 @@ async def fetch_trace(
                 FROM tool_audit
                 WHERE {where}
                 ORDER BY created_at ASC
-                """,
+                """,  # noqa: S608 -- where clauses are fixed literals above, values always bound via params
                 params,
             )
             rows = await cur.fetchall()
@@ -114,4 +114,4 @@ async def fetch_trace(
         "latency_ms",
         "created_at",
     ]
-    return [dict(zip(cols, r)) for r in rows]
+    return [dict(zip(cols, r, strict=True)) for r in rows]

@@ -81,22 +81,24 @@ export async function streamChat(opts: {
       if (line.startsWith("event: ")) {
         lastEvent = line.slice("event: ".length).trim();
       } else if (line.startsWith("data: ")) {
-        let data: any;
+        let data: unknown;
         try {
           data = JSON.parse(line.slice("data: ".length));
         } catch {
           continue;
         }
         if (lastEvent === "route") {
-          out.route = data;
-          opts.onRoute?.(data);
+          const route = data as RouteDecision;
+          out.route = route;
+          opts.onRoute?.(route);
         } else if (lastEvent === "delta") {
-          opts.onDelta?.(data.text ?? "");
+          opts.onDelta?.((data as { text?: string }).text ?? "");
         } else if (lastEvent === "phase") {
-          opts.onPhase?.(data.phase ?? "");
+          opts.onPhase?.((data as { phase?: string }).phase ?? "");
         } else if (lastEvent === "message") {
-          out.message = data;
-          opts.onMessage?.(data);
+          const message = data as ChatStreamMessage;
+          out.message = message;
+          opts.onMessage?.(message);
         } else if (lastEvent === "done") {
           opts.onDone?.();
         }

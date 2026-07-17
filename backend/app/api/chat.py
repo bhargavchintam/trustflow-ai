@@ -12,7 +12,7 @@ from sse_starlette.sse import EventSourceResponse
 
 from app.api.identity import resolve_identity
 from app.audit.logger import log_event
-from app.graph.agent import SONNET_INPUT_PER_MTOK, SONNET_OUTPUT_PER_MTOK, run_react_streaming
+from app.graph.agent import run_react_streaming
 from app.models import ChatRequest, Identity
 from app.policy import gateway
 from app.router import coordinator

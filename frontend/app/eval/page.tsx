@@ -145,7 +145,7 @@ export default function EvalPage() {
                   <td className="py-1.5 font-mono opacity-80">{c.case_id}</td>
                   <td className="py-1.5">{c.input}</td>
                   <td className="py-1.5 opacity-80 font-mono">
-                    {(c.actual as any)?.summary ?? "—"}
+                    {(c.actual as { summary?: string } | null)?.summary ?? "—"}
                   </td>
                   <td className="py-1.5 opacity-80">{c.latency_ms ?? 0}</td>
                 </tr>
