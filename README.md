@@ -6,9 +6,10 @@
 
 > *"The LLM can reason but cannot act. Every tool call passes through a policy engine that enforces tenant boundary and user permissions. Every decision is traceable, every behaviour is measurable, and the architecture is tenant-aware end-to-end — even where I deliberately deferred the multi-tenant deployment plumbing as out-of-scope for a 24-hour build."*
 
-- **Live demo:** https://2fgmvxxdt3.us-east-1.awsapprunner.com
+- **Hosted demo:** offline. The AWS App Runner deployment is no longer running. To try the app, follow the [local run steps](#how-to-run-locally) below.
 - **Demo guide:** [DEMO_GUIDE.md](DEMO_GUIDE.md) — step-by-step walkthrough with screenshots
-- **Loom walkthrough (90s):** _add after recording_
+- **[Demo guide (PDF)](docs/DEMO_GUIDE.pdf)** — the walkthrough as a printable PDF
+- **Tests:** [![tests](https://github.com/bhargavchintam/trustflow-ai/actions/workflows/tests.yml/badge.svg)](https://github.com/bhargavchintam/trustflow-ai/actions/workflows/tests.yml) — backend unit tests run on GitHub Actions
 - **Repo:** https://github.com/bhargavchintam/trustflow-ai
 
 ---
@@ -21,7 +22,7 @@ A returning employee (Maya) asking *"my VPN keeps dropping"* gets a different an
 
 ## Sample teammates
 
-The login page lists four sample teammates (shared password `DemoPass123!`). Multi-tenancy is demonstrated by opening two browsers side by side.
+The login page lists four sample teammates. Multi-tenancy is demonstrated by opening two browsers side by side.
 
 | Teammate | Email | Tenant | Role | Demonstrates |
 |---|---|---|---|---|
@@ -335,6 +336,12 @@ cd frontend && pnpm install && pnpm dev    # http://localhost:3000
 curl -fsS http://localhost:8080/healthz | jq
 uv run python -m app.evals.smoke_test --url http://localhost:8080
 uv run python -m app.evals.run_evals --api http://localhost:8080
+```
+
+**Unit tests.** The backend unit tests (policy gateway and keyword router) need no database and no API keys. GitHub Actions runs them on every push to `main` and on pull requests ([tests.yml](.github/workflows/tests.yml)).
+
+```bash
+cd backend && uv run --extra dev pytest -q
 ```
 
 ---
